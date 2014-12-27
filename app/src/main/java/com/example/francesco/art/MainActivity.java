@@ -38,7 +38,6 @@ public class MainActivity extends ActionBarActivity {
 
         GridView gridview = (GridView) findViewById(R.id.gridView);
         gridview.setAdapter(new ImageAdapter(this));
-
         /*
         CODE FOR GRID ITEM DETAIL
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
