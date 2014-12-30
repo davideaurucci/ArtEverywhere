@@ -1,6 +1,5 @@
 package com.example.francesco.art;
 
-
 import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;

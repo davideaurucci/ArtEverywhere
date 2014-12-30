@@ -31,8 +31,6 @@ import android.app.NotificationManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 
-
-
 public class UploadActivity extends ActionBarActivity {
 
     Button btn_upload;
