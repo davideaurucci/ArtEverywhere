@@ -2,7 +2,9 @@ package com.example.francesco.art;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.os.AsyncTask;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -11,25 +13,30 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import cod.com.appspot.omega_terrain_803.testGCS.TestGCS;
 import cod.com.appspot.omega_terrain_803.testGCS.TestGCS.Display.Getphotos;
 import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseCollection;
+import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseMessage;
 
 
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity{
 
+    //quante foto da scaricare
+    final int quanteFoto = 10;
+    String[] urlPhoto = new String[quanteFoto];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +45,12 @@ public class MainActivity extends ActionBarActivity {
 
         GridView gridview = (GridView) findViewById(R.id.gridView);
         gridview.setAdapter(new ImageAdapter(this));
+
+        //ricavo l'array di stringhe (url) che ho generato nello SplashScreen
+        Bundle extras = getIntent().getExtras();
+        urlPhoto = extras.getStringArray("urls");
+
+
         /*
         CODE FOR GRID ITEM DETAIL
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -49,7 +62,6 @@ public class MainActivity extends ActionBarActivity {
             }
         });
         */
-
     }
 
     //Custom adapter
@@ -62,7 +74,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         public int getCount() {
-            return mThumbIds.length;
+            return urlPhoto.length;
         }
 
         @Override
@@ -95,13 +107,12 @@ public class MainActivity extends ActionBarActivity {
             DisplayMetrics metrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-            //metrics.heightPixels;
             int size = metrics.widthPixels;
 
             Picasso.with(MainActivity.this)
-                    .load(mThumbIds[position])
+                    .load(""+urlPhoto[position]+"")
                     .placeholder(R.raw.place_holder)
-                    .error(R.raw.big_problem)
+                    .error(R.raw.place_holder)
                     .noFade().resize(size/2, size/2)
                     .centerCrop()
                     .into(imageView);
@@ -109,9 +120,6 @@ public class MainActivity extends ActionBarActivity {
 
        }
     }
-
-    static Integer[] mThumbIds = {R.raw.img3, R.raw.img2, R.raw.urban, R.raw.urban2, R.raw.urban3, R.raw.image3};
-
 
 
     @Override
