@@ -1,6 +1,7 @@
 package com.example.francesco.art;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -22,33 +24,15 @@ import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseColle
 import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseMessage;
 
 
-public class SplashScreen extends ActionBarActivity {
+public class SplashScreen extends Activity {
     protected String[] urlPhoto = new String[10];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
-
-        //hide status bar
-        if (Build.VERSION.SDK_INT < 16) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }else{
-            View decorView = getWindow().getDecorView();
-            // Hide the status bar.
-            int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-            decorView.setSystemUiVisibility(uiOptions);
-            // Remember that you should never show the action bar if the
-            // status bar is hidden, so hide that too if necessary.
-            //ActionBar actionBar = getActionBar();
-            //actionBar.hide();
-
-        }
-
-
-
-
 
         AsyncTask<Integer, Void, MainDownloadResponseCollection> getAndDisplayGreeting =
                 new AsyncTask<Integer, Void, MainDownloadResponseCollection> () {
