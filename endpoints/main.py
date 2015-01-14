@@ -94,7 +94,8 @@ class PictureEntry(ndb.Model):
                scopes=[endpoints.EMAIL_SCOPE])
 class TestGCS(remote.Service):
 
-    num_index = IndexNumber()
+    def __init__(self):
+        self.num_index = IndexNumber()
 
     @endpoints.method(UploadRequestMessage, message_types.VoidMessage,
                       path='upload', http_method="POST", name="upload.putphoto")
