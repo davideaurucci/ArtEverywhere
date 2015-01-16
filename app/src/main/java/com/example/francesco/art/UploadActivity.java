@@ -76,18 +76,14 @@ public class UploadActivity extends ActionBarActivity {
 
                         try {
                             MainUploadRequestMessage greeting = new MainUploadRequestMessage();
-                            Log.d("ECCOMI","Setto filename e foto");
                             greeting.setFilename(filename.getText().toString());
                             greeting.encodePhoto(ba);
-                            Log.d("ECCOMI","Ho settato filename e foto");
                             Putphoto put = apiServiceHandle.upload().putphoto(greeting);
-                            Log.d("ECCOMI","creo putphoto");
                             put.execute();
-                            Log.d("ECCOMI","eseguo putphoto");
                             return greeting;
                         } catch (IOException e) {
-                            //Toast.makeText(getApplicationContext(), "Exception during API call!", Toast.LENGTH_LONG).show();
-                            Log.d("ERRORE",e.getMessage());
+                            Toast.makeText(getApplicationContext(), "Exception during API call!", Toast.LENGTH_LONG).show();
+                            //Log.d("ERRORE",e.getMessage());
                         }
                         return null;
                     }

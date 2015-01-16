@@ -28,8 +28,8 @@ import java.util.List;
 public class MainActivity extends ActionBarActivity{
 
     //quante foto da scaricare
-    final int quanteFoto = 10;
-    String[] urlPhoto = new String[quanteFoto];
+    final int quanteFoto = 20;
+    private String[] urlPhoto = new String[quanteFoto];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +42,8 @@ public class MainActivity extends ActionBarActivity{
         //ricavo l'array di stringhe (url) che ho generato nello SplashScreen
         Bundle extras = getIntent().getExtras();
         urlPhoto = extras.getStringArray("urls");
+
+
 
 
         /*

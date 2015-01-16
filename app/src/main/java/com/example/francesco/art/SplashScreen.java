@@ -26,7 +26,7 @@ import cod.com.appspot.endpoints_final.testGCS.model.MainDownloadResponseMessage
 
 
 public class SplashScreen extends Activity {
-    final long numFoto = 20;
+    protected long numFoto = 20;
     protected String[] urlPhoto;
 
     @Override
@@ -68,14 +68,14 @@ public class SplashScreen extends Activity {
                             int quanteFotoCaricate = greeting.getPhotos().size();
                             if(quanteFotoCaricate < numFoto) {
                                 urlPhoto = new String[quanteFotoCaricate];
-                                for(int i = 0; i < quanteFotoCaricate-1; i++) {
+                                for(int i = 0; i < quanteFotoCaricate; i++) {
                                     String url = greeting.getPhotos().get(i).getPhoto();
                                     urlPhoto[i] = url;
                                     Log.d("URL", url);
                                 }
                             }else{
                                 urlPhoto = new String[(int)numFoto];
-                                for(int i = 0; i < numFoto-1; i++) {
+                                for(int i = 0; i < numFoto; i++) {
                                     String url = greeting.getPhotos().get(i).getPhoto();
                                     urlPhoto[i] = url;
                                     Log.d("URL", url);
@@ -86,19 +86,12 @@ public class SplashScreen extends Activity {
 
                         } else {
                             Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
-                            avviaUpload();
                         }
                     }
                 };
 
         getAndDisplayGreeting.execute();
 
-    }
-
-    private void avviaUpload() {
-        Intent myIntent = new Intent(SplashScreen.this, UploadActivity.class);
-        this.startActivity(myIntent);
-        this.finish();
     }
 
     private void avviaApp(String[] urlPhoto){
