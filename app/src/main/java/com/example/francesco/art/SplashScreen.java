@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ import cod.com.appspot.endpoints_final.testGCS.model.MainDownloadResponseMessage
 public class SplashScreen extends Activity {
     protected long numFoto = 20;
     protected String[] urlPhoto;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +37,7 @@ public class SplashScreen extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         AsyncTask<Integer, Void, MainDownloadResponseCollection> getAndDisplayGreeting =
                 new AsyncTask<Integer, Void, MainDownloadResponseCollection> () {
