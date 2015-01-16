@@ -19,12 +19,6 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import cod.com.appspot.omega_terrain_803.testGCS.TestGCS;
-import cod.com.appspot.omega_terrain_803.testGCS.TestGCS.Display.Getphotos;
-import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseCollection;
-import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseMessage;
-
-
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;

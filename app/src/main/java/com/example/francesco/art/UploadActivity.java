@@ -16,9 +16,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import cod.com.appspot.omega_terrain_803.testGCS.TestGCS;
-import cod.com.appspot.omega_terrain_803.testGCS.TestGCS.Upload.Putphoto;
-import cod.com.appspot.omega_terrain_803.testGCS.model.MainUploadRequestMessage;
+import cod.com.appspot.endpoints_final.testGCS.TestGCS;
+import cod.com.appspot.endpoints_final.testGCS.TestGCS.Upload.Putphoto;
+import cod.com.appspot.endpoints_final.testGCS.model.MainUploadRequestMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -72,17 +72,22 @@ public class UploadActivity extends ActionBarActivity {
                     @Override
                     protected MainUploadRequestMessage doInBackground(Void... unused) {
                         // Retrieve service handle.
-                        TestGCS apiServiceHandle = AppConstants.getApiServiceHandle();
+                        TestGCS apiServiceHandle = AppConstants.getApiServiceHandle(null);
 
                         try {
                             MainUploadRequestMessage greeting = new MainUploadRequestMessage();
+                            Log.d("ECCOMI","Setto filename e foto");
                             greeting.setFilename(filename.getText().toString());
                             greeting.encodePhoto(ba);
+                            Log.d("ECCOMI","Ho settato filename e foto");
                             Putphoto put = apiServiceHandle.upload().putphoto(greeting);
+                            Log.d("ECCOMI","creo putphoto");
                             put.execute();
+                            Log.d("ECCOMI","eseguo putphoto");
                             return greeting;
                         } catch (IOException e) {
-                            Toast.makeText(getApplicationContext(), "Exception during API call!", Toast.LENGTH_LONG).show();
+                            //Toast.makeText(getApplicationContext(), "Exception during API call!", Toast.LENGTH_LONG).show();
+                            Log.d("ERRORE",e.getMessage());
                         }
                         return null;
                     }

@@ -18,14 +18,16 @@ import android.widget.Toast;
 
 import java.io.IOException;
 
-import cod.com.appspot.omega_terrain_803.testGCS.TestGCS;
-import cod.com.appspot.omega_terrain_803.testGCS.TestGCS.Display.Getphotos;
-import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseCollection;
-import cod.com.appspot.omega_terrain_803.testGCS.model.MainDownloadResponseMessage;
+
+import cod.com.appspot.endpoints_final.testGCS.TestGCS;
+import cod.com.appspot.endpoints_final.testGCS.TestGCS.Display.Getphotos;
+import cod.com.appspot.endpoints_final.testGCS.model.MainDownloadResponseCollection;
+import cod.com.appspot.endpoints_final.testGCS.model.MainDownloadResponseMessage;
 
 
 public class SplashScreen extends Activity {
-    protected String[] urlPhoto = new String[10];
+    final long numFoto = 20;
+    protected String[] urlPhoto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,11 +41,16 @@ public class SplashScreen extends Activity {
                     @Override
                     protected MainDownloadResponseCollection doInBackground(Integer... integers) {
                         // Retrieve service handle.
-                        TestGCS apiServiceHandle = AppConstants.getApiServiceHandle();
+                        TestGCS apiServiceHandle = AppConstants.getApiServiceHandle(null);
 
                         try {
-                            Getphotos getphotos = apiServiceHandle.display().getphotos();
-                            MainDownloadResponseCollection greeting = getphotos.execute();
+                            Getphotos get = apiServiceHandle.display().getphotos(numFoto);
+                            Log.d("LOG","Sono qui");
+                            MainDownloadResponseCollection greeting = get.execute();
+
+                            Log.d("SIZE",""+greeting.size());
+                            Log.d("LOG","Sono qui");
+
                             return greeting;
                         } catch (IOException e) {
                             Toast.makeText(getApplicationContext(), "Exception during API call!", Toast.LENGTH_LONG).show();
@@ -54,25 +61,44 @@ public class SplashScreen extends Activity {
                     @Override
                     protected void onPostExecute(MainDownloadResponseCollection greeting) {
                         if (greeting!=null) {
-                            Log.d("SIZE",""+greeting.size());
-                            Log.d("LOG","Sono qui");
+                            Log.d("SIZE", "" + greeting.size());
+                            Log.d("LOG", "Sono qui");
+                            Log.d("NUM FOTO IN GREETING", ""+greeting.getPhotos().size());
 
-                            for(int i = 0; i < 10; i++) {
-                                String url = greeting.getPhotos().get(i).getPhoto();
-                                urlPhoto[i] = url;
-                                Log.d("URL", url);
+                            int quanteFotoCaricate = greeting.getPhotos().size();
+                            if(quanteFotoCaricate < numFoto) {
+                                urlPhoto = new String[quanteFotoCaricate];
+                                for(int i = 0; i < quanteFotoCaricate-1; i++) {
+                                    String url = greeting.getPhotos().get(i).getPhoto();
+                                    urlPhoto[i] = url;
+                                    Log.d("URL", url);
+                                }
+                            }else{
+                                urlPhoto = new String[(int)numFoto];
+                                for(int i = 0; i < numFoto-1; i++) {
+                                    String url = greeting.getPhotos().get(i).getPhoto();
+                                    urlPhoto[i] = url;
+                                    Log.d("URL", url);
+                                }
                             }
 
                             avviaApp(urlPhoto);
 
                         } else {
                             Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
+                            avviaUpload();
                         }
                     }
                 };
 
         getAndDisplayGreeting.execute();
 
+    }
+
+    private void avviaUpload() {
+        Intent myIntent = new Intent(SplashScreen.this, UploadActivity.class);
+        this.startActivity(myIntent);
+        this.finish();
     }
 
     private void avviaApp(String[] urlPhoto){
