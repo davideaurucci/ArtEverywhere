@@ -1,0 +1,58 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        applicationId "com.example.francesco.art"
+        minSdkVersion 15
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:21.0.3'
+    //compile files('libs/omega_terrain_803_appspot_com-testGCS-v1-20141224144911-java-1.19.0-sources.jar')
+    compile 'com.android.support:support-annotations:21.0.+'
+    // BEGIN Google APIs
+    // Play Services will validate the application prior to allowing OAuth2 access.
+    compile 'com.google.android.gms:play-services:4.2.+'
+    // The following lines implement maven imports as defined at:
+    // https://code.google.com/p/google-api-java-client/wiki/Setup
+    // Add the Google API client library.
+    compile('com.google.api-client:google-api-client:1.17.0-rc') {
+        // Exclude artifacts that the Android SDK/Runtime provides.
+        exclude(group: 'xpp3', module: 'xpp3')
+        exclude(group: 'org.apache.httpcomponents', module: 'httpclient')
+        exclude(group: 'junit', module: 'junit')
+        exclude(group: 'com.google.android', module: 'android')
+    }
+    // Add the Android extensions for the Google API client library.
+    // This will automatically include play services as long as you have download that library
+    // from the Android SDK manager.
+    // Add the Android extensions for the Google API client library.
+    compile('com.google.api-client:google-api-client-android:1.17.0-rc') {
+        // Exclude play services, since we're not using this yet.
+        //exclude(group: 'com.google.android.google-play-services', module: 'google-play-services')
+    }
+    // END Google APIs
+    // The following client libraries make HTTP/JSON on Android easier.
+    // Android extensions for Google HTTP Client.
+    compile('com.google.http-client:google-http-client-android:1.17.0-rc') {
+        exclude(group: 'com.google.android', module: 'android')
+    }
+    // This is used by the Google HTTP client library.
+    compile 'com.google.guava:guava:14.0.+'
+    compile files('libs/annotations-12.0.jar')
+    compile files('libs/picasso-2.4.0.jar')
+}
