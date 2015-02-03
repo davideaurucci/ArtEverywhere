@@ -19,7 +19,7 @@
 package cod.com.appspot.endpoints_final.testGCS.model;
 
 /**
- * Model definition for MainDownloadResponseCollection.
+ * Model definition for MainPictureDetailsCollection.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the testGCS. For a detailed explanation see:
@@ -29,37 +29,43 @@ package cod.com.appspot.endpoints_final.testGCS.model;
  * @author Google, Inc.
  */
 @SuppressWarnings("javadoc")
-public final class MainDownloadResponseCollection extends com.google.api.client.json.GenericJson {
+public final class MainPictureDetailsCollection extends com.google.api.client.json.GenericJson {
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.util.List<MainDownloadResponseMessage> photos;
+  private java.util.List<MainPictureDetailsMessage> photos;
+
+  static {
+    // hack to force ProGuard to consider MainPictureDetailsMessage used, since otherwise it would be stripped out
+    // see http://code.google.com/p/google-api-java-client/issues/detail?id=528
+    com.google.api.client.util.Data.nullOf(MainPictureDetailsMessage.class);
+  }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.util.List<MainDownloadResponseMessage> getPhotos() {
+  public java.util.List<MainPictureDetailsMessage> getPhotos() {
     return photos;
   }
 
   /**
    * @param photos photos or {@code null} for none
    */
-  public MainDownloadResponseCollection setPhotos(java.util.List<MainDownloadResponseMessage> photos) {
+  public MainPictureDetailsCollection setPhotos(java.util.List<MainPictureDetailsMessage> photos) {
     this.photos = photos;
     return this;
   }
 
   @Override
-  public MainDownloadResponseCollection set(String fieldName, Object value) {
-    return (MainDownloadResponseCollection) super.set(fieldName, value);
+  public MainPictureDetailsCollection set(String fieldName, Object value) {
+    return (MainPictureDetailsCollection) super.set(fieldName, value);
   }
 
   @Override
-  public MainDownloadResponseCollection clone() {
-    return (MainDownloadResponseCollection) super.clone();
+  public MainPictureDetailsCollection clone() {
+    return (MainPictureDetailsCollection) super.clone();
   }
 
 }

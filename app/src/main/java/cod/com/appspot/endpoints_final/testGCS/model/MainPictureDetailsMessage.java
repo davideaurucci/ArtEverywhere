@@ -19,7 +19,7 @@
 package cod.com.appspot.endpoints_final.testGCS.model;
 
 /**
- * Model definition for MainUploadRequestMessage.
+ * Model definition for MainPictureDetailsMessage.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the testGCS. For a detailed explanation see:
@@ -29,13 +29,19 @@ package cod.com.appspot.endpoints_final.testGCS.model;
  * @author Google, Inc.
  */
 @SuppressWarnings("javadoc")
-public final class MainUploadRequestMessage extends com.google.api.client.json.GenericJson {
+public final class MainPictureDetailsMessage extends com.google.api.client.json.GenericJson {
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.String artist;
+
+  /**
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key("date_time")
+  private java.lang.String dateTime;
 
   /**
    * The value may be {@code null}.
@@ -54,6 +60,18 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
    */
   @com.google.api.client.util.Key
   private java.lang.String filename;
+
+  /**
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key("gcs_filename")
+  private java.lang.String gcsFilename;
+
+  /**
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key @com.google.api.client.json.JsonString
+  private java.lang.Long likes;
 
   /**
    * The value may be {@code null}.
@@ -77,8 +95,23 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
   /**
    * @param artist artist or {@code null} for none
    */
-  public MainUploadRequestMessage setArtist(java.lang.String artist) {
+  public MainPictureDetailsMessage setArtist(java.lang.String artist) {
     this.artist = artist;
+    return this;
+  }
+
+  /**
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getDateTime() {
+    return dateTime;
+  }
+
+  /**
+   * @param dateTime dateTime or {@code null} for none
+   */
+  public MainPictureDetailsMessage setDateTime(java.lang.String dateTime) {
+    this.dateTime = dateTime;
     return this;
   }
 
@@ -92,7 +125,7 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
   /**
    * @param descr descr or {@code null} for none
    */
-  public MainUploadRequestMessage setDescr(java.lang.String descr) {
+  public MainPictureDetailsMessage setDescr(java.lang.String descr) {
     this.descr = descr;
     return this;
   }
@@ -107,7 +140,7 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
   /**
    * @param dim dim or {@code null} for none
    */
-  public MainUploadRequestMessage setDim(java.lang.String dim) {
+  public MainPictureDetailsMessage setDim(java.lang.String dim) {
     this.dim = dim;
     return this;
   }
@@ -122,8 +155,38 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
   /**
    * @param filename filename or {@code null} for none
    */
-  public MainUploadRequestMessage setFilename(java.lang.String filename) {
+  public MainPictureDetailsMessage setFilename(java.lang.String filename) {
     this.filename = filename;
+    return this;
+  }
+
+  /**
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getGcsFilename() {
+    return gcsFilename;
+  }
+
+  /**
+   * @param gcsFilename gcsFilename or {@code null} for none
+   */
+  public MainPictureDetailsMessage setGcsFilename(java.lang.String gcsFilename) {
+    this.gcsFilename = gcsFilename;
+    return this;
+  }
+
+  /**
+   * @return value or {@code null} for none
+   */
+  public java.lang.Long getLikes() {
+    return likes;
+  }
+
+  /**
+   * @param likes likes or {@code null} for none
+   */
+  public MainPictureDetailsMessage setLikes(java.lang.Long likes) {
+    this.likes = likes;
     return this;
   }
 
@@ -137,13 +200,12 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
   /**
    * @param luogo luogo or {@code null} for none
    */
-  public MainUploadRequestMessage setLuogo(java.lang.String luogo) {
+  public MainPictureDetailsMessage setLuogo(java.lang.String luogo) {
     this.luogo = luogo;
     return this;
   }
 
   /**
-   * @see #decodePhoto()
    * @return value or {@code null} for none
    */
   public java.lang.String getPhoto() {
@@ -151,48 +213,21 @@ public final class MainUploadRequestMessage extends com.google.api.client.json.G
   }
 
   /**
-
-   * @see #getPhoto()
-   * @return Base64 decoded value or {@code null} for none
-   *
-   * @since 1.14
-   */
-  public byte[] decodePhoto() {
-    return com.google.api.client.util.Base64.decodeBase64(photo);
-  }
-
-  /**
-   * @see # encodePhoto()
    * @param photo photo or {@code null} for none
    */
-  public MainUploadRequestMessage setPhoto(java.lang.String photo) {
+  public MainPictureDetailsMessage setPhoto(java.lang.String photo) {
     this.photo = photo;
     return this;
   }
 
-  /**
-
-   * @see # setPhoto()
-   *
-   * <p>
-   * The value is encoded Base64 or {@code null} for none.
-   * </p>
-   *
-   * @since 1.14
-   */
-  public MainUploadRequestMessage encodePhoto(byte[] photo) {
-    this.photo = com.google.api.client.util.Base64.encodeBase64URLSafeString(photo);
-    return this;
+  @Override
+  public MainPictureDetailsMessage set(String fieldName, Object value) {
+    return (MainPictureDetailsMessage) super.set(fieldName, value);
   }
 
   @Override
-  public MainUploadRequestMessage set(String fieldName, Object value) {
-    return (MainUploadRequestMessage) super.set(fieldName, value);
-  }
-
-  @Override
-  public MainUploadRequestMessage clone() {
-    return (MainUploadRequestMessage) super.clone();
+  public MainPictureDetailsMessage clone() {
+    return (MainPictureDetailsMessage) super.clone();
   }
 
 }

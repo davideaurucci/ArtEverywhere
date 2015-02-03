@@ -19,7 +19,7 @@
 package cod.com.appspot.endpoints_final.testGCS.model;
 
 /**
- * Model definition for MainDownloadResponseMessage.
+ * Model definition for MainArtistDetailsMessage.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the testGCS. For a detailed explanation see:
@@ -29,184 +29,184 @@ package cod.com.appspot.endpoints_final.testGCS.model;
  * @author Google, Inc.
  */
 @SuppressWarnings("javadoc")
-public final class MainDownloadResponseMessage extends com.google.api.client.json.GenericJson {
+public final class MainArtistDetailsMessage extends com.google.api.client.json.GenericJson {
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String artist;
-
-  /**
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key("date_time")
-  private java.lang.String dateTime;
+  private java.lang.String bio;
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String descr;
+  private java.lang.String cognome;
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String dim;
+  private java.lang.String email;
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String filename;
-
-  /**
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key @com.google.api.client.json.JsonString
-  private java.lang.Long likes;
+  private java.lang.String message;
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String luogo;
+  private java.lang.String nickname;
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String photo;
+  private java.lang.String nome;
+
+  /**
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String pic;
+
+  /**
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String sito;
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getArtist() {
-    return artist;
+  public java.lang.String getBio() {
+    return bio;
   }
 
   /**
-   * @param artist artist or {@code null} for none
+   * @param bio bio or {@code null} for none
    */
-  public MainDownloadResponseMessage setArtist(java.lang.String artist) {
-    this.artist = artist;
+  public MainArtistDetailsMessage setBio(java.lang.String bio) {
+    this.bio = bio;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getDateTime() {
-    return dateTime;
+  public java.lang.String getCognome() {
+    return cognome;
   }
 
   /**
-   * @param dateTime dateTime or {@code null} for none
+   * @param cognome cognome or {@code null} for none
    */
-  public MainDownloadResponseMessage setDateTime(java.lang.String dateTime) {
-    this.dateTime = dateTime;
+  public MainArtistDetailsMessage setCognome(java.lang.String cognome) {
+    this.cognome = cognome;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getDescr() {
-    return descr;
+  public java.lang.String getEmail() {
+    return email;
   }
 
   /**
-   * @param descr descr or {@code null} for none
+   * @param email email or {@code null} for none
    */
-  public MainDownloadResponseMessage setDescr(java.lang.String descr) {
-    this.descr = descr;
+  public MainArtistDetailsMessage setEmail(java.lang.String email) {
+    this.email = email;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getDim() {
-    return dim;
+  public java.lang.String getMessage() {
+    return message;
   }
 
   /**
-   * @param dim dim or {@code null} for none
+   * @param message message or {@code null} for none
    */
-  public MainDownloadResponseMessage setDim(java.lang.String dim) {
-    this.dim = dim;
+  public MainArtistDetailsMessage setMessage(java.lang.String message) {
+    this.message = message;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getFilename() {
-    return filename;
+  public java.lang.String getNickname() {
+    return nickname;
   }
 
   /**
-   * @param filename filename or {@code null} for none
+   * @param nickname nickname or {@code null} for none
    */
-  public MainDownloadResponseMessage setFilename(java.lang.String filename) {
-    this.filename = filename;
+  public MainArtistDetailsMessage setNickname(java.lang.String nickname) {
+    this.nickname = nickname;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.Long getLikes() {
-    return likes;
+  public java.lang.String getNome() {
+    return nome;
   }
 
   /**
-   * @param likes likes or {@code null} for none
+   * @param nome nome or {@code null} for none
    */
-  public MainDownloadResponseMessage setLikes(java.lang.Long likes) {
-    this.likes = likes;
+  public MainArtistDetailsMessage setNome(java.lang.String nome) {
+    this.nome = nome;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getLuogo() {
-    return luogo;
+  public java.lang.String getPic() {
+    return pic;
   }
 
   /**
-   * @param luogo luogo or {@code null} for none
+   * @param pic pic or {@code null} for none
    */
-  public MainDownloadResponseMessage setLuogo(java.lang.String luogo) {
-    this.luogo = luogo;
+  public MainArtistDetailsMessage setPic(java.lang.String pic) {
+    this.pic = pic;
     return this;
   }
 
   /**
    * @return value or {@code null} for none
    */
-  public java.lang.String getPhoto() {
-    return photo;
+  public java.lang.String getSito() {
+    return sito;
   }
 
   /**
-   * @param photo photo or {@code null} for none
+   * @param sito sito or {@code null} for none
    */
-  public MainDownloadResponseMessage setPhoto(java.lang.String photo) {
-    this.photo = photo;
+  public MainArtistDetailsMessage setSito(java.lang.String sito) {
+    this.sito = sito;
     return this;
   }
 
   @Override
-  public MainDownloadResponseMessage set(String fieldName, Object value) {
-    return (MainDownloadResponseMessage) super.set(fieldName, value);
+  public MainArtistDetailsMessage set(String fieldName, Object value) {
+    return (MainArtistDetailsMessage) super.set(fieldName, value);
   }
 
   @Override
-  public MainDownloadResponseMessage clone() {
-    return (MainDownloadResponseMessage) super.clone();
+  public MainArtistDetailsMessage clone() {
+    return (MainArtistDetailsMessage) super.clone();
   }
 
 }
