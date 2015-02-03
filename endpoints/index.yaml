@@ -1,0 +1,6 @@
+indexes:
+- kind: PictureEntry
+  ancestor: yes
+  properties:
+  - name: date_time
+    direction: desc
