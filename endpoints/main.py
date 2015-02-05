@@ -66,20 +66,23 @@ class UploadRequestMessage(messages.Message):
     descr = messages.StringField(4)
     luogo = messages.StringField(5)
     dim = messages.StringField(6)
+    technique = messages.StringField(7)
 
 class DownloadRequestMessage(messages.Message):
     fetch = messages.IntegerField(1, required=True)
     date_time = messages.StringField(2)
+    technique = messages.StringField(3)
 
 class DownloadResponseMessage(messages.Message):
     filename = messages.StringField(1, required=True)
     date_time = messages.StringField(2, required=True)
     photo = messages.StringField(3, required=True)
     artist = messages.StringField(4, required=True)
-    descr = messages.StringField(5)
-    luogo = messages.StringField(6)
-    dim = messages.StringField(7)
-    likes = messages.IntegerField(8)
+    technique = messages.StringField(5)
+    descr = messages.StringField(6)
+    luogo = messages.StringField(7)
+    dim = messages.StringField(8)
+    likes = messages.IntegerField(9)
 
 class DownloadResponseCollection(messages.Message):
     photos = messages.MessageField(DownloadResponseMessage, 1, repeated=True)
@@ -94,10 +97,11 @@ class PictureDetailsMessage(messages.Message):
     date_time = messages.StringField(3, required=True)
     photo = messages.StringField(4, required=True)
     artist = messages.StringField(5, required=True)
-    descr = messages.StringField(6)
-    luogo = messages.StringField(7)
-    dim = messages.StringField(8)
-    likes = messages.IntegerField(9)
+    technique = messages.StringField(6)
+    descr = messages.StringField(7)
+    luogo = messages.StringField(8)
+    dim = messages.StringField(9)
+    likes = messages.IntegerField(10)
 
 class PictureUpdateMessage(messages.Message):
     gcs_filename = messages.StringField(1, required=True)
@@ -105,6 +109,7 @@ class PictureUpdateMessage(messages.Message):
     descr = messages.StringField(3)
     luogo = messages.StringField(4)
     dim = messages.StringField(5)
+    technique = messages.StringField(6)
 
 class PictureDetailsCollection(messages.Message):
     photos = messages.MessageField(PictureDetailsMessage, 1, repeated=True)
@@ -141,10 +146,19 @@ class ArtistDetailsMessage(messages.Message):
 class ArtistRequestMessage(messages.Message):
     email = messages.StringField(1, required=True)
 
+class TechniqueResponseMessage(messages.Message):
+    technique = messages.StringField(1, required=True)
+
+class TechniqueResponseCollection(messages.Message):
+    techniques = messages.MessageField(TechniqueResponseMessage, 1, repeated=True)
+
 class DefaultResponseMessage(messages.Message):
     message = messages.StringField(1)
 
 # Datastore Tables
+class TechniqueEntry(ndb.Model):
+    nome = ndb.StringProperty(required=True)
+
 class PictureEntry(ndb.Model):
     blob_key = ndb.StringProperty(required=True)
     date_time = ndb.DateTimeProperty(auto_now_add=True)
@@ -155,6 +169,7 @@ class PictureEntry(ndb.Model):
     luogo = ndb.StringProperty()
     dim = ndb.StringProperty()
     likes = ndb.IntegerProperty()
+    technique = ndb.KeyProperty(kind=TechniqueEntry)
 
 class ArtistEntry(ndb.Model):
     email = ndb.StringProperty(required=True)
@@ -164,9 +179,6 @@ class ArtistEntry(ndb.Model):
     sito = ndb.StringProperty()
     bio = ndb.StringProperty()
     pic = ndb.StringProperty()
-
-class TechniqueEntry(ndb.Model):
-    nome = ndb.StringProperty(required=True)
 
 @endpoints.api(name="testGCS", version="v1",
                allowed_client_ids=[WEB_CLIENT_ID, ANDROID_CLIENT_ID,
@@ -183,6 +195,16 @@ class TestGCS(remote.Service):
         filename = request.filename
         bimg = request.photo
         num_index = self.num_index
+
+        artist = ArtistEntry.query(ArtistEntry.email == request.artist).get()
+
+        if artist is None:
+            return DefaultResponseMessage(message="Artist not found!")
+
+        technique = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
+
+        if technique is None:
+            return DefaultResponseMessage(message="Technique not found!")
 
         gcs_filename = '/' + BUCKET_NAME + '/' + str(num_index.get_index())
 
@@ -230,13 +252,9 @@ class TestGCS(remote.Service):
         bs_filename = "/gs" + gcs_filename
         blob_key = blobstore.create_gs_key(bs_filename)
 
-        artist = ArtistEntry.query(ArtistEntry.email == request.artist).get()
-
-        if artist is None:
-            return DefaultResponseMessage(message="Artist not found!")
-
         pic = PictureEntry(parent=artist.key, blob_key=blob_key, filename=filename, gcs_filename=gcs_filename,
-                           artist=request.artist, descr=request.descr, luogo=request.luogo, dim=request.dim, likes=0)
+                           artist=request.artist, descr=request.descr, luogo=request.luogo, dim=request.dim, likes=0,
+                           technique=technique.key)
         pic.put()
 
         num_index.inc_index()
@@ -249,12 +267,25 @@ class TestGCS(remote.Service):
         fetch = request.fetch
 
         logging.info("DATE_TIME = %s" % request.date_time)
+        pictures = None
 
-        if request.date_time is None:
+        if request.date_time is None and request.technique is None:
             pictures = PictureEntry.query().order(-PictureEntry.date_time).fetch(fetch)
-        else:
+        elif request.technique is None:
             date_time = datetime.strptime(request.date_time, "%Y-%m-%d %H:%M:%S")
             pictures = PictureEntry.query(PictureEntry.date_time < date_time).order(-PictureEntry.date_time).fetch(fetch)
+        elif request.date_time is None:
+            technique = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
+            if technique is not None:
+                pictures = PictureEntry.query(PictureEntry.technique == technique.key).fetch(fetch)
+        else:
+            date_time = datetime.strptime(request.date_time, "%Y-%m-%d %H:%M:%S")
+            technique = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
+            if technique is not None:
+                pictures = PictureEntry.query(ndb.AND(PictureEntry.technique == technique.key,
+                                                      PictureEntry.date_time < date_time)).fetch(fetch)
+            else:
+                pictures = PictureEntry.query(PictureEntry.date_time < date_time).order(-PictureEntry.date_time).fetch(fetch)
 
         messlist = []
 
@@ -262,9 +293,18 @@ class TestGCS(remote.Service):
             imgurl = images.get_serving_url(blob_key=pic.blob_key)
             date_timeobj = pic.date_time
             date_timestr = date_timeobj.strftime("%Y-%m-%d %H:%M:%S")
-            messlist.append(DownloadResponseMessage(artist=pic.artist, filename=pic.filename, date_time=date_timestr,
-                                                    photo=imgurl, descr=pic.descr, luogo=pic.luogo, dim=pic.dim,
-                                                    likes=pic.likes))
+            technique = None
+            if pic.technique is not None:
+                technique = TechniqueEntry.query(TechniqueEntry.key == pic.technique).get()
+            if technique is not None:
+                messlist.append(DownloadResponseMessage(artist=pic.artist, filename=pic.filename,
+                                                        date_time=date_timestr,photo=imgurl, descr=pic.descr,
+                                                        luogo=pic.luogo, dim=pic.dim, likes=pic.likes,
+                                                        technique=technique.nome))
+            else:
+                messlist.append(DownloadResponseMessage(artist=pic.artist, filename=pic.filename,
+                                                        date_time=date_timestr,photo=imgurl, descr=pic.descr,
+                                                        luogo=pic.luogo, dim=pic.dim, likes=pic.likes))
 
         return DownloadResponseCollection(photos=messlist)
 
@@ -296,7 +336,6 @@ class TestGCS(remote.Service):
 
         if artist.get() is not None:
             return DefaultResponseMessage(message="Artist already exists!")
-
 
         email = request.email
         nome = request.nome
@@ -368,6 +407,12 @@ class TestGCS(remote.Service):
             picture.luogo = request.luogo
         if request.dim is not None:
             picture.dim = request.dim
+        if request.technique is not None:
+            technique = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
+            if technique is not None:
+                picture.technique = technique.key
+            else:
+                return DefaultResponseMessage(message="Technique not found!")
 
         picture.put()
 
@@ -387,11 +432,42 @@ class TestGCS(remote.Service):
             imgurl = images.get_serving_url(blob_key=pic.blob_key)
             date_timeobj = pic.date_time
             date_timestr = date_timeobj.strftime("%Y-%m-%d %H:%M:%S")
-            messlist.append(PictureDetailsMessage(artist=pic.artist, gcs_filename=pic.gcs_filename,
-                                                  filename=pic.filename, date_time=date_timestr,photo=imgurl,
-                                                  descr=pic.descr, luogo=pic.luogo, dim=pic.dim, likes=pic.likes))
+            if pic.technique is not None:
+                technique = TechniqueEntry.query(TechniqueEntry.key == pic.technique).get()
+                messlist.append(PictureDetailsMessage(artist=pic.artist, gcs_filename=pic.gcs_filename,
+                                                      filename=pic.filename, date_time=date_timestr,photo=imgurl,
+                                                      descr=pic.descr, luogo=pic.luogo, dim=pic.dim, likes=pic.likes,
+                                                      technique=technique.nome))
+            else:
+                messlist.append(PictureDetailsMessage(artist=pic.artist, gcs_filename=pic.gcs_filename,
+                                                      filename=pic.filename, date_time=date_timestr,photo=imgurl,
+                                                      descr=pic.descr, luogo=pic.luogo, dim=pic.dim, likes=pic.likes))
 
         return PictureDetailsCollection(photos=messlist)
+
+    @endpoints.method(message_types.VoidMessage, TechniqueResponseCollection,
+                      path='techniques', http_method='GET', name='techniques.gettechniques')
+    def get_techniques(self, request):
+        techniques = TechniqueEntry.query()
+
+        messlist = []
+
+        for technique in techniques:
+            messlist.append(TechniqueResponseMessage(technique=technique.nome))
+
+        return TechniqueResponseCollection(techniques=messlist)
+
+    @endpoints.method(TechniqueResponseMessage, DefaultResponseMessage,
+                      path='technique', http_method='GET', name='technique.puttechnique')
+    def put_technique(self, request):
+        entry = TechniqueEntry.query(TechniqueEntry.nome == request.technique)
+        if entry is None:
+            return DefaultResponseMessage(message="Technique already existent!")
+
+        technique = TechniqueEntry(nome=request.technique)
+        technique.put()
+
+        return DefaultResponseMessage(message="Technique Added")
 
 
 APPLICATION = endpoints.api_server([TestGCS])

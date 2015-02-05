@@ -4,3 +4,7 @@ indexes:
   properties:
   - name: date_time
     direction: desc
+- kind: PictureEntry
+  properties:
+  - name: technique
+  - name: date_time
