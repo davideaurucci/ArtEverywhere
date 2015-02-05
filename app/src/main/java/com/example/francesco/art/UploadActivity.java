@@ -6,6 +6,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+
+import android.os.Environment;
+import android.provider.MediaStore;
+
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,9 +25,18 @@ import cod.com.appspot.endpoints_final.testGCS.TestGCS.Upload.Putphoto;
 import cod.com.appspot.endpoints_final.testGCS.model.MainUploadRequestMessage;
 
 import java.io.ByteArrayOutputStream;
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
 
 import android.util.Base64;
 
@@ -46,6 +59,39 @@ public class UploadActivity extends ActionBarActivity {
     private final int SELECT_PHOTO = 1;
 
 
+    private Uri fileUri;
+
+    private static Uri getOutputMediaFileUri(){
+        return Uri.fromFile(getOutputMediaFile());
+    }
+
+    /** Create a File for saving an image or video */
+    private static File getOutputMediaFile(){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "MyCameraApp");
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                Log.d("MyCameraApp", "failed to create directory");
+                return null;
+            }
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                "IMG_"+ timeStamp + ".jpg");
+
+        return mediaFile;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,7 +106,19 @@ public class UploadActivity extends ActionBarActivity {
             public void onClick(View v) {
                 Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
                 photoPickerIntent.setType("image/*");
-                startActivityForResult(photoPickerIntent, SELECT_PHOTO);
+
+
+
+                Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                fileUri = getOutputMediaFileUri(); // create a file to save the image
+
+                String pickTitle = "Select or take a new Picture"; // Or get from strings.xml
+                Intent chooserIntent = Intent.createChooser(photoPickerIntent, pickTitle);
+                chooserIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+                chooserIntent.putExtra
+                        (Intent.EXTRA_INITIAL_INTENTS,new Intent[] { takePhotoIntent });
+                startActivityForResult(chooserIntent, SELECT_PHOTO);
+
             }
         });
 

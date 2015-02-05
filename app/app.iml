@@ -88,8 +88,13 @@
     <orderEntry type="library" exported="" name="annotations-12.0" level="project" />
     <orderEntry type="library" exported="" name="google-http-client-1.17.0-rc" level="project" />
     <orderEntry type="library" exported="" name="google-http-client-android-1.17.0-rc" level="project" />
+<<<<<<< HEAD
+    <orderEntry type="library" exported="" name="support-v4-21.0.3" level="project" />
+    <orderEntry type="library" exported="" name="google-api-client-android-1.17.0-rc" level="project" />
+=======
     <orderEntry type="library" exported="" name="google-api-client-android-1.17.0-rc" level="project" />
     <orderEntry type="library" exported="" name="support-v4-21.0.3" level="project" />
+>>>>>>> 0bc9d467a7be4ee61d5a7a17cdc699873a7c0bd3
     <orderEntry type="library" exported="" name="guava-14.0.1" level="project" />
     <orderEntry type="library" exported="" name="omega_terrain_803_appspot_com-testGCS-v1-20141224144911-java-1.19.0-sources" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-21.0.3" level="project" />
