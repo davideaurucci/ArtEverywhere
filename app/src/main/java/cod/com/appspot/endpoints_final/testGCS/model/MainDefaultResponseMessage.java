@@ -19,7 +19,7 @@
 package cod.com.appspot.endpoints_final.testGCS.model;
 
 /**
- * Model definition for MainDownloadResponseCollection.
+ * Model definition for MainDefaultResponseMessage.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the testGCS. For a detailed explanation see:
@@ -29,37 +29,37 @@ package cod.com.appspot.endpoints_final.testGCS.model;
  * @author Google, Inc.
  */
 @SuppressWarnings("javadoc")
-public final class MainDownloadResponseCollection extends com.google.api.client.json.GenericJson {
+public final class MainDefaultResponseMessage extends com.google.api.client.json.GenericJson {
 
   /**
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.util.List<MainDownloadResponseMessage> photos;
+  private java.lang.String message;
 
   /**
    * @return value or {@code null} for none
    */
-  public java.util.List<MainDownloadResponseMessage> getPhotos() {
-    return photos;
+  public java.lang.String getMessage() {
+    return message;
   }
 
   /**
-   * @param photos photos or {@code null} for none
+   * @param message message or {@code null} for none
    */
-  public MainDownloadResponseCollection setPhotos(java.util.List<MainDownloadResponseMessage> photos) {
-    this.photos = photos;
+  public MainDefaultResponseMessage setMessage(java.lang.String message) {
+    this.message = message;
     return this;
   }
 
   @Override
-  public MainDownloadResponseCollection set(String fieldName, Object value) {
-    return (MainDownloadResponseCollection) super.set(fieldName, value);
+  public MainDefaultResponseMessage set(String fieldName, Object value) {
+    return (MainDefaultResponseMessage) super.set(fieldName, value);
   }
 
   @Override
-  public MainDownloadResponseCollection clone() {
-    return (MainDownloadResponseCollection) super.clone();
+  public MainDefaultResponseMessage clone() {
+    return (MainDefaultResponseMessage) super.clone();
   }
 
 }

@@ -7,7 +7,6 @@
     tools:context="com.example.francesco.art.SplashScreen"
     android:backgroundTintMode="screen"
     style="@style/Base.TextAppearance.AppCompat.SearchResult">
-    <!--android:background="@drawable/sfondo">-->
 
 
 
