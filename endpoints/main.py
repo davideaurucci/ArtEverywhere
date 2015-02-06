@@ -460,8 +460,8 @@ class TestGCS(remote.Service):
     @endpoints.method(TechniqueResponseMessage, DefaultResponseMessage,
                       path='technique', http_method='GET', name='technique.puttechnique')
     def put_technique(self, request):
-        entry = TechniqueEntry.query(TechniqueEntry.nome == request.technique)
-        if entry is None:
+        entry = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
+        if entry is not None:
             return DefaultResponseMessage(message="Technique already existent!")
 
         technique = TechniqueEntry(nome=request.technique)
