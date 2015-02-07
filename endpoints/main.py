@@ -195,16 +195,20 @@ class TestGCS(remote.Service):
         filename = request.filename
         bimg = request.photo
         num_index = self.num_index
+        technique = request.technique
 
         artist = ArtistEntry.query(ArtistEntry.email == request.artist).get()
 
         if artist is None:
             return DefaultResponseMessage(message="Artist not found!")
 
-        technique = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
+        if technique is not None:
+            technique_q = TechniqueEntry.query(TechniqueEntry.nome == request.technique).get()
 
-        if technique is None:
-            return DefaultResponseMessage(message="Technique not found!")
+            if technique_q is None:
+                return DefaultResponseMessage(message="Technique not found!")
+            else:
+                technique = technique_q.key
 
         gcs_filename = '/' + BUCKET_NAME + '/' + str(num_index.get_index())
 
@@ -254,7 +258,7 @@ class TestGCS(remote.Service):
 
         pic = PictureEntry(parent=artist.key, blob_key=blob_key, filename=filename, gcs_filename=gcs_filename,
                            artist=request.artist, descr=request.descr, luogo=request.luogo, dim=request.dim, likes=0,
-                           technique=technique.key)
+                           technique=technique)
         pic.put()
 
         num_index.inc_index()
@@ -448,7 +452,7 @@ class TestGCS(remote.Service):
     @endpoints.method(message_types.VoidMessage, TechniqueResponseCollection,
                       path='techniques', http_method='GET', name='techniques.gettechniques')
     def get_techniques(self, request):
-        techniques = TechniqueEntry.query()
+        techniques = TechniqueEntry.query().order(TechniqueEntry.nome)
 
         messlist = []
 
