@@ -4,4 +4,6 @@
     tools:context="com.example.francesco.art.UploadActivity">
     <item android:id="@+id/upload_artwork" android:title="POST"
         android:orderInCategory="100" app:showAsAction="always" />
+    <item android:id="@+id/prova" android:title="Prova"
+        android:orderInCategory="100" app:showAsAction="always" />
 </menu>

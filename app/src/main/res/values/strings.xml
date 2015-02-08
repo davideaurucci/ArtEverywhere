@@ -6,5 +6,6 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_upload">Upload</string>
     <string name="title_activity_splash_screen">Art Everywhere</string>
+    <string name="title_activity_chooser_photo">ChooserPhoto</string>
 
 </resources>

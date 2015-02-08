@@ -1,6 +1,8 @@
 package com.example.francesco.art;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -17,6 +19,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,11 +29,14 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import cod.com.appspot.endpoints_final.testGCS.TestGCS;
+import cod.com.appspot.endpoints_final.testGCS.TestGCS.Techniques.Gettechniques;
 import cod.com.appspot.endpoints_final.testGCS.TestGCS.Upload.Putphoto;
+import cod.com.appspot.endpoints_final.testGCS.model.MainTechniqueResponseCollection;
 import cod.com.appspot.endpoints_final.testGCS.model.MainUploadRequestMessage;
 
 import java.io.ByteArrayOutputStream;
@@ -65,10 +71,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class UploadActivity extends ActionBarActivity implements AdapterView.OnItemClickListener {
-
+    AlertDialog dialog;
     Button btn_test;
 
-    Button btn_upload;
+    private String artist = "arteverywhere00@gmail.com"; //DA CAMBIARE CON L'EMAIL DELL'ARTISTA LOGGATO
+    Button btn_tecniche;
+    String[] tecniche;
+    String tecnicaScelta = "";
     ImageButton btn_choose;
 
     TextView descr;
@@ -76,9 +85,9 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
 
     EditText filename;
     EditText description;
-    EditText tecnique;
+    TextView tecnique;
     EditText size;
-    EditText place;
+    AutoCompleteTextView place;
 
     String image;
     byte[] ba;
@@ -128,18 +137,20 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
         setContentView(R.layout.activity_upload);
 
         btn_choose = (ImageButton)findViewById(R.id.button2);
-
-        btn_test = (Button)findViewById(R.id.button3);
+        btn_tecniche = (Button)findViewById(R.id.buttonTec);
 
         descr = (TextView)findViewById(R.id.textView5);
         count = (TextView)findViewById(R.id.textView6);
+        tecnique = (TextView)findViewById(R.id.textView7);
 
         filename = (EditText)findViewById(R.id.editText);
         description = (EditText)findViewById(R.id.editText2);
-        tecnique = (EditText)findViewById(R.id.editText5);
         size = (EditText)findViewById(R.id.editText4);
 
-        //Aggiorno il contatore dei caratteri rimanenti in descrizione
+
+        getTecniche();
+
+        /* Aggiorno il contatore dei caratteri rimanenti in descrizione */
         description.addTextChangedListener(new TextWatcher() {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -156,7 +167,8 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
             }
         });
 
-        AutoCompleteTextView place = (AutoCompleteTextView) findViewById(R.id.editText3);
+           /* Autocomplete per il campo Luogo */
+        place = (AutoCompleteTextView) findViewById(R.id.editText3);
         place.setAdapter(new PlacesAutoCompleteAdapter(this, R.layout.list_item));
         place.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -166,16 +178,39 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
             }
         });
 
+        /* Scelta tecnica */
+        btn_tecniche.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(UploadActivity.this);
+                final LayoutInflater inflater = getLayoutInflater();
+                final View convertView = (View) inflater.inflate(R.layout.custom, null);
+                alertDialog.setView(convertView);
+                alertDialog.setTitle("Techniques");
+                ListView lv = (ListView) convertView.findViewById(R.id.listView1);
+                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        //System.out.println(tecniche[position]);
+                        tecnique.setText("Technique*: " + tecniche[position]);
+                        tecnicaScelta = tecniche[position];
+                        btn_tecniche.setText("CHANGE TECHNIQUE");
+                        dialog.dismiss();
+                        //System.out.println("*"+description.getText().toString()+"*");
+                    }
+                });
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item_black, tecniche);
+                lv.setAdapter(adapter);
+                dialog = alertDialog.show();
+            }
+        });
 
-
-
+       /* Scelta artwork */
         btn_choose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
                 photoPickerIntent.setType("image/*");
-
-
 
                 Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 fileUri = getOutputMediaFileUri(); // create a file to save the image
@@ -198,10 +233,49 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
     }
 
     private boolean ValidoCampo(String s) {
-        if(s.length()>0){
-            return true;
-        }
+        if(s.length()>0) return true;
         return false;
+    }
+
+    private void getTecniche(){
+        AsyncTask<Void, Void, MainTechniqueResponseCollection> getTec = new AsyncTask<Void, Void, MainTechniqueResponseCollection>() {
+
+            @Override
+            protected MainTechniqueResponseCollection doInBackground(Void... unused) {
+                // Retrieve service handle.
+                TestGCS apiServiceHandle = AppConstants.getApiServiceHandle(null);
+
+                try {
+                    MainTechniqueResponseCollection greeting = new MainTechniqueResponseCollection();
+                    Gettechniques get = apiServiceHandle.techniques().gettechniques();
+                    greeting = get.execute();
+                    return greeting;
+                } catch (IOException e) {
+                    Toast.makeText(getApplicationContext(), "Exception during API call - tecniche!", Toast.LENGTH_LONG).show();
+                    //Log.d("ERRORE",e.getMessage());
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(MainTechniqueResponseCollection greeting) {
+                if (greeting != null) {
+                    System.out.println("SONO QUI");
+                    System.out.println("tecniche: " + greeting.size());
+                    System.out.println("tecniche: " + greeting.getTechniques().size());
+                    tecniche = new String[greeting.getTechniques().size()];
+                    for(int i = 0; i < greeting.getTechniques().size(); i++){
+                        tecniche[i] = greeting.getTechniques().get(i).getTechnique();
+                        //Log.d("TECNICA",greeting.getTechniques().get(i).getTechnique());
+                    }
+                    //Toast.makeText(getApplicationContext(), "Upload successfull!", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+        getTec.execute();
+
     }
 
 
@@ -215,6 +289,7 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
 
                   try {
                         final Uri imageUri = imageReturnedIntent.getData();
+                        System.out.println("*"+imageUri.toString());
                         final InputStream imageStream = getContentResolver().openInputStream(imageUri);
                         final Bitmap bitmapOrg = BitmapFactory.decodeStream(imageStream);
                         ByteArrayOutputStream bao = new ByteArrayOutputStream();
@@ -250,7 +325,9 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
 
         // POST ARTWORK
         if (id == R.id.upload_artwork){
-            if(ValidoCampo(filename.getText().toString())) {
+            if(!ValidoCampo(filename.getText().toString())){
+                Toast.makeText(getApplicationContext(), "Enter a valid artwork's title!", Toast.LENGTH_LONG).show();
+            }else{
 
                 AsyncTask<Void, Void, MainUploadRequestMessage> uploadPhoto = new AsyncTask<Void, Void, MainUploadRequestMessage>() {
 
@@ -263,6 +340,12 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                             MainUploadRequestMessage greeting = new MainUploadRequestMessage();
                             greeting.setFilename(filename.getText().toString());
                             greeting.encodePhoto(ba);
+                            greeting.setArtist(artist);
+                            greeting.setTechnique(tecnicaScelta);
+                            if(!description.getText().toString().equals("")) greeting.setDescr(description.getText().toString());
+                            if(!size.getText().toString().equals("")) greeting.setDim(size.getText().toString());
+                            if(!place.getText().toString().equals("")) greeting.setLuogo(place.getText().toString());
+
                             Putphoto put = apiServiceHandle.upload().putphoto(greeting);
                             put.execute();
                             return greeting;
@@ -310,10 +393,11 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
             uploadPhoto.execute((Void)null);
 
 
-            }else{
-                Toast.makeText(getApplicationContext(), "Enter a valid artwork's title!", Toast.LENGTH_LONG).show();
             }
             return true;
+        }else if(id == R.id.prova){
+            Intent myIntent = new Intent(UploadActivity.this, ChooserPhoto.class);
+            this.startActivity(myIntent);
         }
 
         return super.onOptionsItemSelected(item);

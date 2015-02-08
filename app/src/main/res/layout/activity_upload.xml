@@ -59,7 +59,9 @@
             android:layout_height="wrap_content"
             android:id="@+id/editText"
             android:hint="What is the artwork's title?"
-            android:layout_below="@+id/textView4"/>
+            android:layout_below="@+id/textView4"
+            android:inputType="textCapSentences"
+            android:imeOptions="actionNext"/>
 
 
          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -94,23 +96,25 @@
             android:id="@+id/editText2"
             android:hint="Describe your artwork"
             android:maxLength="250"
-            android:layout_below="@+id/linlay"/>
+            android:layout_below="@+id/linlay"
+            android:inputType="textCapSentences"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Tecnique:"
+            android:text="Technique:* "
             android:id="@+id/textView7"
             android:layout_below="@+id/editText2"
             android:layout_marginTop="10dp"/>
 
-        <EditText
+        <Button
+            android:id="@+id/buttonTec"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/editText5"
-            android:hint="Enter tecnique"
-            android:layout_below="@+id/textView7"/>
+            android:text="Choose tecnique"
+            android:layout_below="@+id/textView7"
+            android:layout_centerHorizontal="true" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -118,14 +122,14 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Place:"
             android:id="@+id/textView8"
-            android:layout_below="@+id/editText5"
+            android:layout_below="@+id/buttonTec"
             android:layout_marginTop="10dp"/>
 
         <AutoCompleteTextView xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/editText3"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter place"
+            android:hint="Where you have created it?"
             android:layout_below="@+id/textView8"/>
 
         <TextView
@@ -141,16 +145,16 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editText4"
-            android:hint="What is the size? Format required: xxx-xxx"
+            android:hint="Enter the size.. (e.g. 120x200)"
             android:layout_below="@+id/textView9"/>
 
-        <Button
-            android:id="@+id/button3"
-            android:layout_width="wrap_content"
+        <TextView
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="test"
-            android:layout_centerHorizontal="true"
-            android:layout_below="@+id/editText4" />
+            android:text="Fields with * are required!"
+            android:id="@+id/textView10"
+            android:layout_below="@+id/editText4"
+            android:layout_marginTop="10dp" />
 
-        </RelativeLayout>
+    </RelativeLayout>
 </ScrollView>
