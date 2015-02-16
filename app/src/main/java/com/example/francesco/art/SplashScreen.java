@@ -1,35 +1,25 @@
 package com.example.francesco.art;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.support.v7.app.ActionBarActivity;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.io.IOException;
 
-
-import cod.com.appspot.endpoints_final.testGCS.TestGCS;
-import cod.com.appspot.endpoints_final.testGCS.TestGCS.Display.Getphotos;
-import cod.com.appspot.endpoints_final.testGCS.model.MainDownloadResponseCollection;
-import cod.com.appspot.endpoints_final.testGCS.model.MainDownloadResponseMessage;
-
-
-public class SplashScreen extends Activity {
-    protected long numFoto = 20;
-    protected String[] urlPhoto;
+public class SplashScreen extends Activity implements TaskCallbackDownloadArtworks {
     ProgressBar progressBar;
+    SharedPreferences pref;
+    String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,72 +29,41 @@ public class SplashScreen extends Activity {
         setContentView(R.layout.activity_splash_screen);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        AsyncTask<Integer, Void, MainDownloadResponseCollection> getAndDisplayGreeting =
-                new AsyncTask<Integer, Void, MainDownloadResponseCollection> () {
-                    @Override
-                    protected MainDownloadResponseCollection doInBackground(Integer... integers) {
-                        // Retrieve service handle.
-                        TestGCS apiServiceHandle = AppConstants.getApiServiceHandle(null);
+        pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        email = pref.getString("email_artista",null);
 
-                        try {
-                            Getphotos get = apiServiceHandle.display().getphotos(numFoto);
-                            Log.d("LOG","Sono qui");
-                            MainDownloadResponseCollection greeting = get.execute();
+        if(isOnline()){
+            //Log.d("DB","creo istanza di DB");
+            DatabaseArtwork db = new DatabaseArtwork(getApplicationContext());
+            Log.d("DB","ho creato istanza di DB ed eseguo download artwork");
+            db.clear(db.getWritableDatabase());
+            new DownloadArtworks(getApplicationContext(),db,this).execute();
+        }else{
+            Toast.makeText(getApplicationContext(), "Connessione internet assente!", Toast.LENGTH_LONG).show();
+            done();
+        }
 
-                            Log.d("SIZE",""+greeting.size());
-                            Log.d("LOG","Sono qui");
-
-                            return greeting;
-                        } catch (IOException e) {
-                            Toast.makeText(getApplicationContext(), "Exception during API call!", Toast.LENGTH_LONG).show();
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(MainDownloadResponseCollection greeting) {
-                        if (greeting!=null) {
-                            Log.d("SIZE", "" + greeting.size());
-                            Log.d("LOG", "Sono qui");
-                            Log.d("NUM FOTO IN GREETING", ""+greeting.getPhotos().size());
-
-                            int quanteFotoCaricate = greeting.getPhotos().size();
-                            if(quanteFotoCaricate < numFoto) {
-                                urlPhoto = new String[quanteFotoCaricate];
-                                for(int i = 0; i < quanteFotoCaricate; i++) {
-                                    String url = greeting.getPhotos().get(i).getPhoto();
-                                    urlPhoto[i] = url;
-                                    Log.d("URL", url);
-                                }
-                            }else{
-                                urlPhoto = new String[(int)numFoto];
-                                for(int i = 0; i < numFoto; i++) {
-                                    String url = greeting.getPhotos().get(i).getPhoto();
-                                    urlPhoto[i] = url;
-                                    Log.d("URL", url);
-                                }
-                            }
-
-                            avviaApp(urlPhoto);
-
-                        } else {
-                            Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                };
-
-        getAndDisplayGreeting.execute();
 
     }
 
-    private void avviaApp(String[] urlPhoto){
-        //avvio MainActivity e passo l'array di url generato dagli endpoint
-        Intent myIntent = new Intent(SplashScreen.this, MainActivity.class);
-        myIntent.putExtra("urls",urlPhoto);
-        this.startActivity(myIntent);
-        this.finish();
+    public boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
+    public void done() {
+        if(email==null) {
+            Intent myIntent = new Intent(SplashScreen.this, Login.class);
+            this.startActivity(myIntent);
+            this.finish();
+        }else{
+            Intent myIntent = new Intent(SplashScreen.this, MainActivity.class);
+            this.startActivity(myIntent);
+            this.finish();
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
