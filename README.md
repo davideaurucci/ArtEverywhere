@@ -11,4 +11,5 @@ Milestone 1 - Proof of concept
 ==============
 Milestone 2 - Release Candidate
 - Presentation
+- [Apk file](https://drive.google.com/file/d/0B1qdoPYeXd80eGt5aENKTWJ6SHc/view?usp=sharing)
 - Apk file (https://drive.google.com/file/d/0B1qdoPYeXd80eGt5aENKTWJ6SHc/view?usp=sharing)
