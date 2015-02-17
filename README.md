@@ -13,7 +13,7 @@ Milestone 1 - Proof of Concept
 Milestone 2 - Release Candidate
 ==============
 - Presentation
-- Demo
+- Demo video
 - [Android APK file](https://drive.google.com/file/d/0B1qdoPYeXd80eGt5aENKTWJ6SHc/view?usp=sharing)
 - [Instructions for APK installation](https://drive.google.com/file/d/0B1qdoPYeXd80RTRoZU5Yc0tEYUU/view?usp=sharing)
 - [Report Survey](https://drive.google.com/file/d/0B1qdoPYeXd80Nnp3Q0UxMkFOMTg/view?usp=sharing)
