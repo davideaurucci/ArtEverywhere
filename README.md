@@ -8,6 +8,7 @@ Art Everywhere is an application developed for Google Technologies for Cloud and
 Milestone 1 - Proof of concept
 ==============
 - [Presentation](https://drive.google.com/file/d/0B1qdoPYeXd80TldBM3NiNE40Q28/view?usp=sharing)
+- [Api Explorer](endpoints-final.appspot.com/_ah/api/explorer)
 
 Milestone 2 - Release Candidate
 ==============
