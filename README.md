@@ -1,4 +1,4 @@
-![Art Everywhere](http://www.francescocucari.it/ic_launcher.pnh) ArtEverywhere
+![Art Everywhere](http://www.francescocucari.it/ic_launcher.png) ArtEverywhere
 =============
 
 Art Everywhere - a new way to promote art!
