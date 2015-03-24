@@ -2,17 +2,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
-    <!--
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        app:showAsAction="always" />
-    -->
 
-    <item android:id="@+id/menu_upload"
-        android:title="Upload"
+    <item android:id="@+id/logout"
+        android:title="Logout"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <!--
+    <item android:id="@+id/artista"
+        android:title="Modalità artista"
+        android:orderInCategory="70"
+        app:showAsAction="never" />
+    -->
+    <item android:id="@+id/menu_feedback"
+        android:title="Invia Feedback"
+        android:orderInCategory="80"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/menu_filtro"
+        android:title="Filtra"
         app:showAsAction="always"
-        android:icon="@drawable/icon_upload" />
+        android:icon="@drawable/filter2"/>
+
+    <item android:id="@+id/menu_profile"
+        android:title="Profile"
+        app:showAsAction="always"
+        android:icon="@drawable/user2" />
 
 
 </menu>

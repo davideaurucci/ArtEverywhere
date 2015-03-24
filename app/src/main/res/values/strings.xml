@@ -7,5 +7,12 @@
     <string name="title_activity_upload">Upload</string>
     <string name="title_activity_splash_screen">Art Everywhere</string>
     <string name="title_activity_chooser_photo">ChooserPhoto</string>
+    <string name="title_activity_artwork_details">Artwork Details</string>
+    <string name="title_activity_login">Login</string>
+    <string name="title_activity_expandable_list_adapter">ExpandableListAdapter</string>
+    <string name="title_activity_artist_profile">Artist Profile</string>
+    <string name="title_activity_swipe_refresh">SwipeRefresh</string>
 
+    <string name="app_id">870148833050070</string>
+    <string name="progress_dialog_text">Sharing story, please wait.</string>
 </resources>

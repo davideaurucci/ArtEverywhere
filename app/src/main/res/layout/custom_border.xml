@@ -4,6 +4,7 @@
     android:layout_height="fill_parent">
     <!--<solid android:color="#a3ffc109" />
     <solid android:color="#E7ECEF" />-->
-    <solid android:color="#8AD6F2" />
-    <corners android:radius="10dp" />
+    <!--<solid android:color="#8AD6F2" />-->
+    <solid android:color="#FFFFFF" />
+    <corners android:radius="4dp" />
 </shape>

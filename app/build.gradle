@@ -1,26 +1,41 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        config {
+            keyAlias 'ArtEverywhere'
+            keyPassword 'ArtEverywhere'
+            storeFile file('C:/Users/Francesco/Desktop/ArtEverywhere.keystore')
+            storePassword 'ArtEverywhere'
+        }
+    }
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
-
     defaultConfig {
-        applicationId "com.example.francesco.art"
-        minSdkVersion 16
+        applicationId 'com.arteverywhere.francesco.art'
+        minSdkVersion 15
         targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName '1.0.2'
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
+        debug {
+            signingConfig signingConfigs.config
+            minifyEnabled false
+        }
+    }
+    productFlavors {
     }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:support-v4:21.0.+'
     compile 'com.android.support:appcompat-v7:21.0.3'
     //compile files('libs/omega_terrain_803_appspot_com-testGCS-v1-20141224144911-java-1.19.0-sources.jar')
     compile 'com.android.support:support-annotations:21.0.+'
@@ -55,4 +70,8 @@ dependencies {
     compile 'com.google.guava:guava:14.0.+'
     compile files('libs/annotations-12.0.jar')
     compile files('libs/picasso-2.4.0.jar')
+    compile 'com.facebook.android:facebook-android-sdk:3.21.1'
+    compile 'com.github.rahatarmanahmed:circularprogressview:1.0.0'
+    compile 'com.shamanland:fab:0.0.8'
+    compile 'com.github.navasmdc:MaterialDesign:1.+'
 }
