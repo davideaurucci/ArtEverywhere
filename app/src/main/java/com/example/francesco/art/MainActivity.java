@@ -2,6 +2,7 @@ package com.example.francesco.art;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBar;
@@ -15,9 +16,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -27,9 +30,10 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity{
 
-    //quante foto da scaricare
-    final int quanteFoto = 20;
-    private String[] urlPhoto = new String[quanteFoto];
+    String[] urlPhoto = new String[AppConstants.numFoto];
+    SharedPreferences pref;
+    String email;
+    boolean visitatore = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,24 +43,28 @@ public class MainActivity extends ActionBarActivity{
         GridView gridview = (GridView) findViewById(R.id.gridView);
         gridview.setAdapter(new ImageAdapter(this));
 
-        //ricavo l'array di stringhe (url) che ho generato nello SplashScreen
-        Bundle extras = getIntent().getExtras();
-        urlPhoto = extras.getStringArray("urls");
+        DatabaseArtwork db = new DatabaseArtwork(getApplicationContext());
+        urlPhoto = db.getPhotos();
 
+        pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        email = pref.getString("email_artista",null);
 
+        if(getIntent().hasExtra("visitatore")){
+            Bundle extras = getIntent().getExtras();
+            visitatore = extras.getBoolean("visitatore",false);
+        }
 
-
-        /*
-        CODE FOR GRID ITEM DETAIL
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(MainActivity.this, ActivityTwo.class);
-                intent.putExtra("position", position);
+                Intent intent = new Intent(MainActivity.this, ArtworkDetails.class);
+                String url = urlPhoto[position];
+                intent.putExtra("photo",url);
                 startActivity(intent);
             }
         });
-        */
+
     }
 
     //Custom adapter
@@ -120,7 +128,12 @@ public class MainActivity extends ActionBarActivity{
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        if(visitatore){
+            //non deve visualizzare nulla nella action bar
+        }else {
+            getMenuInflater().inflate(R.menu.menu_main, menu);
+        }
         return true;
     }
 
@@ -131,11 +144,20 @@ public class MainActivity extends ActionBarActivity{
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        if (id == R.id.menu_upload){
-            Intent myIntent = new Intent(MainActivity.this, UploadActivity.class);
-            this.startActivity(myIntent);
-            return true;
-        }
+            if (id == R.id.menu_upload){
+                Intent myIntent = new Intent(MainActivity.this, UploadActivity.class);
+                myIntent.putExtra("email",email);
+                this.startActivity(myIntent);
+                return true;
+            }else if(id == R.id.logout){
+                //Login.signOutFromGplus();
+                pref.edit().remove("email_artista").commit();
+                Intent i = new Intent(MainActivity.this, Login.class);
+                this.startActivity(i);
+                Toast.makeText(getApplicationContext(), "Logout eseguito!", Toast.LENGTH_LONG).show();
+                this.finish();
+                return true;
+            }
 
         return super.onOptionsItemSelected(item);
     }

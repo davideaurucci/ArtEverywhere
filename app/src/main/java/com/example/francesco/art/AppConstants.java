@@ -24,6 +24,7 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 
 
 public class AppConstants {
+    public static final int numFoto = 20;
 
     public static final String WEB_CLIENT_ID = "517964427197-5pgn6p9fgpajehmg3cq2psaa50ie3i2n.apps.googleusercontent.com";
 
