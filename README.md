@@ -24,4 +24,4 @@ Milestone 3 - Final
 - [Demo video](https://www.youtube.com/watch?v=AQYVh9OmlOA)
 - [Download APP from PlayStore](http://bit.ly/ArtEverywhereDownload)
 - [Art Everywhere Landing Page](http://bit.ly/AEsitoweb)
-- [Report Survey](https://drive.google.com/open?id=0B1qdoPYeXd80S2RHU1hrckF0MDA&authuser=0)
+- [Feedback Survey](https://drive.google.com/open?id=0B1qdoPYeXd80S2RHU1hrckF0MDA&authuser=0)
