@@ -18,4 +18,11 @@ Milestone 2 - Release Candidate
 - [Instructions for APK installation](https://drive.google.com/file/d/0B1qdoPYeXd80RTRoZU5Yc0tEYUU/view?usp=sharing)
 - [Report Survey](https://drive.google.com/file/d/0B1qdoPYeXd80Nnp3Q0UxMkFOMTg/view?usp=sharing)
 
-=============
+Milestone 3 - Final
+==============
+- [Presentation](https://drive.google.com/file/d/0B7nHQh6tYmdiUXVkY3NBb2xTQ1U/view?usp=sharing)
+- [Demo video](https://www.youtube.com/watch?v=AQYVh9OmlOA)
+- [Download APP from PlayStore](http://bit.ly/ArtEverywhereDownload)
+- [Art Everywhere Landing Page](http://bit.ly/AEsitoweb)
+- [Feedback Survey](https://drive.google.com/file/d/0B1qdoPYeXd80S2RHU1hrckF0MDA/view?usp=sharing)
+

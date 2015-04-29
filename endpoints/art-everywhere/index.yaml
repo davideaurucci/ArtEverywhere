@@ -1,0 +1,36 @@
+indexes:
+- kind: PictureEntry
+  ancestor: yes
+  properties:
+  - name: date_time
+    direction: desc
+- kind: PictureEntry
+  properties:
+  - name: technique
+  - name: date_time
+- kind: CommentEntry
+  ancestor: yes
+  properties:
+  - name: date_time
+- kind: ArtistEntry
+  properties:
+  - name: cognome
+  - name: nome
+- kind: PictureEntry
+  properties:
+  - name: luogo
+  - name: date_time
+    direction: desc
+- kind: PictureEntry
+  properties:
+  - name: technique
+  - name: date_time
+    direction: desc
+- kind: PictureEntry
+  properties:
+  - name: luogo
+  - name: date_time
+- kind: LikeEntry
+  ancestor: yes
+- kind: CommentEntry
+  ancestor: yes
