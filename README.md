@@ -28,5 +28,5 @@ Milestone 3 - Final
 
 Final Submission
 ==============
-- [Documentation - User Manual]()
+- [Documentation - User Manual](https://drive.google.com/open?id=0B7nHQh6tYmdiOWVKdkQzX3BpcVk&authuser=0)
 - [Download APP from PlayStore](http://bit.ly/ArtEverywhereDownload)
