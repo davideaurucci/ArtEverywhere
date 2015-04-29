@@ -37,19 +37,10 @@ public class DownloadArtworksByDate extends AsyncTask<Integer, Void, MainDownloa
     protected MainDownloadResponseCollection doInBackground(Integer... integers) {
         // Retrieve service handle.
         ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
-
-        Log.d("DB", "doInBack");
-
         try {
             ArtEverywhere.Display.Getphotos get = apiServiceHandle.display().getphotos((long)4);
-            //Log.d("LOG", "Sono qui");
             get.setDateTime(date);
-
             MainDownloadResponseCollection greeting = get.execute();
-
-            //Log.d("SIZE",""+greeting.size());
-            //Log.d("LOG","Sono qui");
-
             return greeting;
         } catch (IOException e) {
             Looper.prepare();
@@ -61,19 +52,16 @@ public class DownloadArtworksByDate extends AsyncTask<Integer, Void, MainDownloa
 
     protected void onPostExecute(MainDownloadResponseCollection greeting) {
         if (greeting!=null) {
-            //Log.d("SIZE", "" + greeting.size());
-            //Log.d("NUM FOTO IN GREETING", "" + greeting.getPhotos().size());
             int quanteFotoCaricate;
-            if(greeting.getPhotos()==null)
-                quanteFotoCaricate=0;
-            else
+            if(greeting.getPhotos()==null) {
+                quanteFotoCaricate = 0;
+            }
+            else {
                 quanteFotoCaricate = greeting.getPhotos().size();
-
+            }
             for(int i = 0; i < quanteFotoCaricate;i++){
-                //System.out.println(i + "<>" + quanteFotoCaricate);
                 String filename = greeting.getPhotos().get(i).getTitle();
                 String photo = greeting.getPhotos().get(i).getUrl();
-                //System.out.println(photo);
                 String artista = greeting.getPhotos().get(i).getArtist();
                 String descrizione = greeting.getPhotos().get(i).getDescr();
                 String dimensioni = greeting.getPhotos().get(i).getDim();
@@ -81,13 +69,9 @@ public class DownloadArtworksByDate extends AsyncTask<Integer, Void, MainDownloa
                 String tecnica = greeting.getPhotos().get(i).getTechnique();
                 long likes = greeting.getPhotos().get(i).getLikes();
                 String data = greeting.getPhotos().get(i).getDateTime();
-
                 Artwork art = new Artwork(filename,photo,artista,descrizione,dimensioni,luogo,tecnica,likes,data);
                 db.insert(art, db.getWritableDatabase());
             }
-
-            //Log.d("DB","<>getAllArt:" + db.getAllArtworks().size());
-
             mCallback.done();
 
         } else {

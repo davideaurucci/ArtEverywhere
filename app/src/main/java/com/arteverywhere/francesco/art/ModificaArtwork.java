@@ -1,7 +1,13 @@
 package com.arteverywhere.francesco.art;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -113,9 +119,30 @@ public class ModificaArtwork extends ActionBarActivity implements TaskCallbackMo
                 Toast.makeText(getApplicationContext(), "Devi scegliere un titolo!", Toast.LENGTH_LONG).show();
             else {
                 SalvaModifiche s = new SalvaModifiche(url, descrizione.getText().toString(), luogo.getText().toString(), size.getText().toString(), titolo.getText().toString(), getApplicationContext(), m);
-                s.execute();
+                if(checkNetwork()) s.execute();
             }
         }
         return true;
+    }
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
+            return false;
+        }
     }
 }

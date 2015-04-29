@@ -1,16 +1,28 @@
 package com.arteverywhere.francesco.art;
 
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,14 +36,17 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import com.squareup.picasso.Picasso;
-
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,22 +86,33 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
 
     View fabUpload; //Floating action bar
 
+    // Filtered list of techniques
+    private ArrayList<String> partialNames = new ArrayList<String>();
+    // List of names matching criteria are listed here
+    private ListView myList;
+    // Field where user enters his search criteria
+    private EditText nameCapture;
+    // Adapter for myList
+    private ArrayAdapter<String> myAdapter;
+    TextView emptyText;
+
+    private CustomListArtists adapterArtists;
+    private ArrayList<String> imagesurl = new ArrayList<String>();
+    private ArrayList<String> artistsemails = new ArrayList<String>();
+    private ArrayList<Artist> artistlist = new ArrayList<Artist>();
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        //BLOCCO SCREENSHOT
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
 
         pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         email = pref.getString("email_artista",null);
 
-        /*if(getIntent().hasExtra("visitatore")){
-            Bundle extras = getIntent().getExtras();
-            visitatore = extras.getBoolean("visitatore",false);
-        }*/
         if(email==null){
             visitatore=true;
         }
@@ -150,6 +176,7 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
 
                 //Se filtro la ricerca "disabilito" l'endless scroll
                 if(!isFiltri) {
+                    System.out.println("******"+urlPhoto.length+"******"+db.getAllArtworks().size());
                     if(db.getAllArtworks().size()>=urlPhoto.length+4){
 
                         String [] b=db.getPhotosAfterScroll(((pagina/2)+1)*4+20);
@@ -159,12 +186,13 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
                         gridview.setAdapter(new ImageAdapter(getApplicationContext()));
 
                     }
-                    else{
+                   else{
 
                         String data=db.getArtworkFromUrl(urlPhoto[urlPhoto.length-1]).getData();
                         new DownloadArtworksByDate(getApplicationContext(),db, callback, data).execute();
 
                     }
+
                 }
             }
 
@@ -185,14 +213,9 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
 
     }
 
-    public boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
 
     public void chiamaApi(){
-        new DownloadArtworksForRefresh(getApplicationContext(),db,this).execute();
+        if(checkNetwork()) new DownloadArtworksForRefresh(getApplicationContext(),db,this).execute();
         // Dopo aver completato l'asyntask viene chiamato done(boolean,boolean)
     }
 
@@ -285,8 +308,8 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
             int size = metrics.widthPixels;
 
             Picasso.with(MainActivity.this)
-                    .load(""+urlPhoto[position]+"")
-                    .placeholder(R.raw.place_holder)
+                    .load("" + urlPhoto[position] + "")
+                    //.placeholder(R.raw.place_holder)
                     .error(R.raw.place_holder)
                     .noFade().resize(size/2, size/2)
                     .centerCrop()
@@ -317,77 +340,132 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-            if(id == R.id.logout){
-                //Login.signOutFromGplus();
-                pref.edit().remove("email_artista").commit();
-                pref.edit().putBoolean("token", true).commit();
+        if (id == R.id.logout) {
+            //Login.signOutFromGplus();
+            pref.edit().remove("email_artista").commit();
+            pref.edit().putBoolean("token", true).commit();
 
-                Intent i = new Intent(MainActivity.this, Login.class);
-                this.startActivity(i);
-                Toast.makeText(getApplicationContext(), "Logout eseguito!", Toast.LENGTH_LONG).show();
-                this.finish();
-                return true;
-            }else if(id == R.id.menu_filtro){
+            Intent i = new Intent(MainActivity.this, Login.class);
+            this.startActivity(i);
+            Toast.makeText(getApplicationContext(), "Logout eseguito!", Toast.LENGTH_LONG).show();
+            this.finish();
+            return true;
+        } else if (id == R.id.menu_filtro) {
                 /* Faccio visualizzare l'alert dialog con la lista dei filtri possibli */
-                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-                final LayoutInflater inflater = getLayoutInflater();
-                final View convertView = (View) inflater.inflate(R.layout.custom, null);
-                alertDialog.setView(convertView);
-                alertDialog.setTitle("Filtra ricerca");
-                ListView lv = (ListView) convertView.findViewById(R.id.listView1);
+            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+            final LayoutInflater inflater = getLayoutInflater();
+            final View convertView = (View) inflater.inflate(R.layout.custom, null);
+            alertDialog.setView(convertView);
+            alertDialog.setTitle("Filtra ricerca");
+            ListView lv = (ListView) convertView.findViewById(R.id.listView1);
 
-                final String[] filtri = {"Più recenti","Tecnica","Luogo", "Artista"};
+            final String[] filtri = {"Più recenti", "Tecnica", "Luogo", "Artista"};
 
-                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        String item = filtri[position];
-                        System.out.println("Ho scelto: " + item);
-                        dialog.dismiss();
-                        //isTecnica = true;
-                        //effettuaDownload();
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String item = filtri[position];
+                    System.out.println("Ho scelto: " + item);
+                    dialog.dismiss();
+                    //isTecnica = true;
+                    //effettuaDownload();
 
-                        if(item.equalsIgnoreCase("Più recenti")){
-                            seeMoreRecent();
-                        }else if(item.equalsIgnoreCase("Tecnica")){ //è stato selezionato -> TECNICA
-                            getTecniche();
-                        }else if(item.equalsIgnoreCase("Luogo")){ //è stato selezionato -> LUOGO
-                            seePlace();
-                        }else if(item.equalsIgnoreCase("Artista")){ //è stato selezionato -> ARTISTA
-                            seeArtists();
-                        }
+                    if (item.equalsIgnoreCase("Più recenti")) {
+                        seeMoreRecent();
+                    } else if (item.equalsIgnoreCase("Tecnica")) { //è stato selezionato -> TECNICA
+                        getTecniche();
+                    } else if (item.equalsIgnoreCase("Luogo")) { //è stato selezionato -> LUOGO
+                        seePlace();
+                    } else if (item.equalsIgnoreCase("Artista")) { //è stato selezionato -> ARTISTA
+                        seeArtists();
                     }
-                });
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item_black, filtri);
-                lv.setAdapter(adapter);
-                dialog = alertDialog.show();
-                return true;
-            }else if(id == R.id.menu_profile){
-                new DownloadArtistForGallery(getApplicationContext(),email,this).execute();
-            }else if(id == R.id.menu_feedback){
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("message/rfc822");
-                i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"arteverywhere00@gmail.com"});
-                i.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Art Everywhere");
-                i.putExtra(Intent.EXTRA_TEXT   , "");
-                try {
-                    startActivity(Intent.createChooser(i, "Invia feedback..."));
-                } catch (android.content.ActivityNotFoundException ex) {
-                    Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
                 }
-                return true;
+            });
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item_black, filtri);
+            lv.setAdapter(adapter);
+            dialog = alertDialog.show();
+            return true;
+        } else if (id == R.id.menu_profile) {
+            if(checkNetwork()) new DownloadArtistForGallery(getApplicationContext(), email, this).execute();
+        } else if (id == R.id.menu_feedback) {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("message/rfc822");
+            i.putExtra(Intent.EXTRA_EMAIL, new String[]{"arteverywhere00@gmail.com"});
+            i.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Art Everywhere");
+            i.putExtra(Intent.EXTRA_TEXT, "");
+            try {
+                startActivity(Intent.createChooser(i, "Invia feedback..."));
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
             }
-            else if(id==R.id.artista){
-                pref.edit().putBoolean("token",true).commit();
-                Intent myIntent = new Intent(MainActivity.this, Login.class);
-                this.startActivity(myIntent);
-                this.finish();
+            return true;
+        } else if (id == R.id.menu_facebook) {
+            try {
+                getApplicationContext().getPackageManager().getPackageInfo("com.facebook.katana", 0);
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("fb://page/1596309167253264"));
+                startActivity(i);
+            } catch (Exception e) {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/ArtEverywhereApp"));
+                startActivity(i);
             }
+        } else if (id == R.id.menu_valutaci){
+            Uri uri = Uri.parse("market://details?id=" + getApplicationContext().getPackageName());
+            Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+            try {
+                startActivity(goToMarket);
+            } catch (ActivityNotFoundException e) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName())));
+            }
+        }
+
+        else if (id==R.id.menu_consiglia){
+            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+            final LayoutInflater inflater = getLayoutInflater();
+            final View convertView = (View) inflater.inflate(R.layout.custom, null);
+            alertDialog.setView(convertView);
+            alertDialog.setTitle("Consiglia Art Everywhere ai tuoi amici");
+
+            final String[] filtri = { "Twitter", "Whatsapp", "Email"};
+            final int[] immagini = {R.drawable.tw, R.drawable.wa, R.drawable.em};
+
+            CustomListInt adapter = new CustomListInt(MainActivity.this, filtri, immagini);
+            ListView lv = (ListView) convertView.findViewById(R.id.listView1);
+
+            lv.setAdapter(adapter);
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String item = filtri[position];
+                    dialog.dismiss();
+
+                    if (item.equalsIgnoreCase("Whatsapp")) {
+                        eseguiShareWhatsapp();
+                    } else if (item.equalsIgnoreCase("Twitter")) {
+                        shareTwitter();
+                    } else if (item.equalsIgnoreCase("Email")) {
+                        shareEmail();
+                    }
+                }
+            });
+
+            dialog = alertDialog.show();
+            return true;
+        }
+
+
+        else if(id==R.id.artista){
+            pref.edit().putBoolean("token",true).commit();
+            Intent myIntent = new Intent(MainActivity.this, Login.class);
+            this.startActivity(myIntent);
+            this.finish();
+        }
 
         return super.onOptionsItemSelected(item);
     }
 
     public void seeMoreRecent(){
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setTitle("Galleria");
         urlPhoto = db.getPhotos();
         gridview.setAdapter(new ImageAdapter(this));
     }
@@ -416,51 +494,151 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
             @Override
             protected void onPostExecute(MainTechniqueResponseCollection greeting) {
                 if (greeting != null) {
-                    System.out.println("SONO QUI");
-                    System.out.println("tecniche: " + greeting.size());
-                    System.out.println("tecniche: " + greeting.getTechniques().size());
+
                     tecniche = new String[greeting.getTechniques().size()];
                     for(int i = 0; i < greeting.getTechniques().size(); i++){
                         tecniche[i] = greeting.getTechniques().get(i).getTechnique();
-                        //Log.d("TECNICA",greeting.getTechniques().get(i).getTechnique());
                     }
 
                     final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
                     final LayoutInflater inflater = getLayoutInflater();
-                    final View convertView = (View) inflater.inflate(R.layout.custom, null);
+                    final View convertView = (View) inflater.inflate(R.layout.custom_autocomplete_listview, null);
                     alertDialog.setView(convertView);
                     alertDialog.setTitle("Tecniche");
-                    ListView lv = (ListView) convertView.findViewById(R.id.listView1);
 
-                    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    myList = (ListView) convertView.findViewById(R.id.listView1);
+                    nameCapture = (EditText) convertView.findViewById(R.id.name);
+                    nameCapture.setHint("Digita la tecnica che vuoi ricercare");
+                    emptyText = (TextView) convertView.findViewById(android.R.id.empty);
+                    myList.setEmptyView(emptyText);
+
+                    emptyText.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent i = new Intent(Intent.ACTION_SEND);
+                            i.setType("message/rfc822");
+                            i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"arteverywhere00@gmail.com"});
+                            i.putExtra(Intent.EXTRA_SUBJECT, "[Suggerimento] Tecnica Mancante");
+                            i.putExtra(Intent.EXTRA_TEXT   , "Voglio suggerire la seguente tecnica mancante: " + nameCapture.getText().toString());
+                            try {
+                                startActivity(Intent.createChooser(i, "Invia suggerimento..."));
+                            } catch (android.content.ActivityNotFoundException ex) {
+                                Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+
+
+
+                    myList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            //System.out.println(tecniche[position]);
-                            tecnicaScelta = tecniche[position];
-                            System.out.println("Ho scelto: " + tecnicaScelta);
+                            tecnicaScelta = partialNames.get(position);
                             dialog.dismiss();
-                            //isTecnica = true;
-                            System.out.println("avvio il download per tecnica");
                             effettuaDownloadPerTecnica(tecnicaScelta);
                         }
                     });
-                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item_black, tecniche);
-                    lv.setAdapter(adapter);
+
+                    for(int i = 0; i < tecniche.length;i++) partialNames.add(i, tecniche[i]);
+
+                    myAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item_black, partialNames);
+                    myList.setAdapter(myAdapter);
+
+                    nameCapture.addTextChangedListener(new TextWatcher() {
+
+                        // As the user types in the search field, the list is
+                        @Override
+                        public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+                            AlterAdapter();
+                        }
+
+                        // Not used for this program
+                        @Override
+                        public void afterTextChanged(Editable arg0) {
+
+                        }
+
+                        // Not uses for this program
+                        @Override
+                        public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    });
+
                     dialog = alertDialog.show();
-
-
-                    //Toast.makeText(getApplicationContext(), "Upload successfull!", Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
                 }
             }
         };
-        getTec.execute();
+        if(checkNetwork()) getTec.execute();
+    }
 
+    private void AlterAdapter() {
+        if (nameCapture.getText().toString().isEmpty()) {
+            partialNames.clear();
+            for(int i = 0; i < tecniche.length;i++) partialNames.add(i,tecniche[i]);
+            myAdapter.notifyDataSetChanged();
+        }
+        else {
+            partialNames.clear();
+            for (int i = 0; i < tecniche.length; i++) {
+                if (tecniche[i].toString().toUpperCase().contains(nameCapture.getText().toString().toUpperCase())) {
+                    partialNames.add(tecniche[i].toString());
+                }
+                myAdapter.notifyDataSetChanged();
+            }
+        }
+
+        if(myAdapter.getCount()==0){
+            emptyText.setVisibility(View.VISIBLE);
+            emptyText.setText("Clicca per segnalare tecnica mancante!");
+        }
+    }
+
+    private void AlterAdapterArtists() {
+        if (nameCapture.getText().toString().isEmpty()) {
+            partialNames.clear();
+            imagesurl.clear();
+            artistsemails.clear();
+            artistlist.clear();
+            for(int i = 0; i < artists.length;i++){
+                partialNames.add(i, artists[i]);
+                imagesurl.add(i, artistsPic[i]);
+                artistsemails.add(i, artistsMail[i]);
+                Artist a = new Artist(artists[i],artistsPic[i],artistsMail[i]);
+                artistlist.add(a);
+            }
+            adapterArtists.notifyDataSetChanged();
+        }
+        else {
+            partialNames.clear();
+            imagesurl.clear();
+            artistsemails.clear();
+            artistlist.clear();
+            for (int i = 0; i < artists.length; i++) {
+                if (artists[i].toString().toUpperCase().contains(nameCapture.getText().toString().toUpperCase())) {
+                    System.out.println(artists[i].toString());
+                    System.out.println(artistsPic[i].toString());
+                    partialNames.add(artists[i]);
+                    imagesurl.add(artistsPic[i]);
+                    artistsemails.add(artistsMail[i]);
+                    Artist a = new Artist(artists[i],artistsPic[i],artistsMail[i]);
+                    artistlist.add(a);
+                }
+                adapterArtists.notifyDataSetChanged();
+            }
+        }
+
+        if(adapterArtists.getCount()==0){
+            emptyText.setVisibility(View.VISIBLE);
+            emptyText.setText("Nessun artista trovato!");
+        }
     }
 
     public void effettuaDownloadPerTecnica(String tecnicaScelta){
-        new DownloadArtworksByTechinique(getApplicationContext(),db,this,tecnicaScelta).execute();
+        if(checkNetwork()) new DownloadArtworksByTechinique(getApplicationContext(),db,this,tecnicaScelta).execute();
     }
 
     public void seePlace(){
@@ -490,7 +668,6 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
                 if(!isSelected){
                     Toast.makeText(getApplicationContext(), "Attenzione! Devi selezionare uno dei suggerimenti proposti", Toast.LENGTH_LONG).show();
                 }else{
-                    //avvio la chiamata alla funzione di libreria
                     dialog.dismiss();
                     effettuaDownloadPerLuogo(selectedCity);
                 }
@@ -501,7 +678,7 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
     }
 
     public void effettuaDownloadPerLuogo(String city){
-        new DownloadArtworksByPlace(getApplicationContext(),db,this,city).execute();
+        if(checkNetwork()) new DownloadArtworksByPlace(getApplicationContext(),db,this,city).execute();
     }
 
     public void seeArtists(){
@@ -509,7 +686,6 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
 
             @Override
             protected MainArtistBriefCollection doInBackground(Void... unused) {
-                // Retrieve service handle.
                 ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
 
                 try {
@@ -519,7 +695,6 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
                     return greeting;
                 } catch (IOException e) {
                     Toast.makeText(getApplicationContext(), "Exception during API call - get Artists!", Toast.LENGTH_LONG).show();
-                    //Log.d("ERRORE",e.getMessage());
                 }
                 return null;
             }
@@ -539,40 +714,78 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
 
                     final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
                     final LayoutInflater inflater = getLayoutInflater();
-                    final View convertView = (View) inflater.inflate(R.layout.custom, null);
+                    final View convertView = (View) inflater.inflate(R.layout.custom_autocomplete_listview, null);
                     alertDialog.setView(convertView);
                     alertDialog.setTitle("Artisti");
 
-                    CustomList adapter = new CustomList(MainActivity.this, artists, artistsPic);
-                    ListView lv = (ListView) convertView.findViewById(R.id.listView1);
-                    lv.setAdapter(adapter);
-                    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    for(int i = 0; i < artists.length;i++){
+                        partialNames.add(i, artists[i]);
+                        imagesurl.add(i, artistsPic[i]);
+                        artistsemails.add(i, artistsMail[i]);
+                        Artist a = new Artist(artists[i],artistsPic[i],artistsMail[i]);
+                        artistlist.add(a);
+                    }
+
+                    //adapterArtists = new CustomListArtists(MainActivity.this, partialNames, imagesurl);
+                    adapterArtists = new CustomListArtists(MainActivity.this, artistlist);
+
+                    myList = (ListView) convertView.findViewById(R.id.listView1);
+                    nameCapture = (EditText) convertView.findViewById(R.id.name);
+                    nameCapture.setHint("Digita l'artista che vuoi ricercare");
+                    emptyText = (TextView) convertView.findViewById(android.R.id.empty);
+                    myList.setEmptyView(emptyText);
+                    myList.setAdapter(adapterArtists);
+
+                    nameCapture.addTextChangedListener(new TextWatcher() {
+
+                        // As the user types in the search field, the list is
                         @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            selectedArtist = artistsMail[position];
-                            picArtista = artistsPic[position];
-                            dialog.dismiss();
-                            getArtistInfo();
+                        public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+                            AlterAdapterArtists();
+                        }
+
+                        // Not used for this program
+                        @Override
+                        public void afterTextChanged(Editable arg0) {
+
+                        }
+
+                        // Not uses for this program
+                        @Override
+                        public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+                            // TODO Auto-generated method stub
+
                         }
                     });
 
+
+                    myList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            selectedArtist = artistlist.get(position).getEmail();
+                            picArtista = artistlist.get(position).getPhoto();
+                            dialog.dismiss();
+                            getArtistInfo();
+
+                        }
+                    });
+
+
                     dialog = alertDialog.show();
 
-
-                    //Toast.makeText(getApplicationContext(), "Upload successfull!", Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
                 }
             }
         };
-        getArtists.execute();
+        if(checkNetwork()) getArtists.execute();
     }
 
     public void getArtistInfo(){
-        new DownloadArtistForGallery(getApplicationContext(),selectedArtist,this).execute();
+        if(checkNetwork()) new DownloadArtistForGallery(getApplicationContext(),selectedArtist,this).execute();
     }
 
-    // metodo di ritorno dalla chiamata getArtistInfo
     @Override
     public void done(String email, String nc, String pic, String nick, String bio, String sito) {
         Intent intent = new Intent(MainActivity.this, ArtistProfile.class);
@@ -581,7 +794,7 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
         intent.putExtra("sito",sito);
         intent.putExtra("nickname",nick);
         intent.putExtra("email",email);
-        intent.putExtra("pic",pic);
+        intent.putExtra("pic", pic);
 
         startActivity(intent);
     }
@@ -589,16 +802,118 @@ public class MainActivity extends ActionBarActivity implements TaskCallbackDownl
     //metodo di ritorno dalle funzioni di libreria dei filtri
     public void done(int x){
         isFiltri = true;
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
 
         if(x==0){ //callback from DownloadArtworksByTechnique
             urlPhoto = db.getArtworksFromTechinique(tecnicaScelta);
+            getSupportActionBar().setTitle(tecnicaScelta);
+
         }else if(x==1){ //callback from DownloadArtworksByPlace
             urlPhoto = db.getArtworksFromPlace(selectedCity);
-        }
+            getSupportActionBar().setTitle(selectedCity);
 
-        //gridview.setSelection(gridview.getAdapter().getCount()-1);
+        }
         gridview.setSelection(gridview.getFirstVisiblePosition());
         gridview.setAdapter(new ImageAdapter(this));
 
+    }
+
+
+    private void shareTwitter() {
+        try {
+            Uri uri = Uri.parse("android.resource://com.arteverywhere.francesco.art/drawable/logo");
+            Intent tweetIntent = new Intent(Intent.ACTION_SEND);
+            tweetIntent.putExtra(Intent.EXTRA_TEXT, "Scarica Art Everywhere e scopri i nuovi artisti emergenti! L'app è completamente gratuita! http://bit.ly/AEDownload");
+            tweetIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            tweetIntent.setType("image/jpeg");
+            PackageManager pm = MainActivity.this.getPackageManager();
+            List<ResolveInfo> lract = pm.queryIntentActivities(tweetIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            boolean resolved = false;
+            for (ResolveInfo ri : lract) {
+                if (ri.activityInfo.name.contains("twitter")) {
+                    tweetIntent.setClassName(ri.activityInfo.packageName,
+                            ri.activityInfo.name);
+                    resolved = true;
+                    break;
+                }
+            }
+            startActivity(resolved ?
+                    tweetIntent :
+                    Intent.createChooser(tweetIntent, "Choose one"));
+        } catch (final ActivityNotFoundException e) {
+            Toast.makeText(MainActivity.this, "Devi prima installare Twitter!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void eseguiShareWhatsapp() {
+            Uri uri = Uri.parse("android.resource://com.arteverywhere.francesco.art/drawable/logo");
+         Intent shareIntent = new Intent();
+            shareIntent.setPackage("com.whatsapp");
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Scarica Art Everywhere e scopri tutti gli artisti emergenti! Scarica ora l'app! " + "http://bit.ly/AEDownload");
+            shareIntent.setType("image/*");
+            startActivity(Intent.createChooser(shareIntent, "Share Image"));
+        }
+
+
+    public void shareEmail(){
+        Uri uri = Uri.parse("android.resource://com.arteverywhere.francesco.art/drawable/logo");
+
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.setType("message/rfc822");
+        i.putExtra(Intent.EXTRA_SUBJECT, "Scarica Art Everywhere!");
+        i.putExtra(Intent.EXTRA_TEXT, "Ciao! Scarica Art Everywhere e scopri tutti i nuovi artisti emergenti! Scarica ora l'app! CLICCA IL SEGUENTE LINK: http://bit.ly/AEDownload");
+        i.putExtra(Intent.EXTRA_STREAM, uri);
+        try {
+            startActivity(Intent.createChooser(i, "Consiglia Art Everywhere.."));
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public Uri getLocalBitmapUri(ImageView imageView) {
+        Drawable drawable = imageView.getDrawable();
+        Bitmap bmp = null;
+        if (drawable instanceof BitmapDrawable){
+            bmp = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+        } else {
+            return null;
+        }
+        // Store image to default external storage directory
+        Uri bmpUri = null;
+        try {
+            File file =  new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
+            file.getParentFile().mkdirs();
+            FileOutputStream out = new FileOutputStream(file);
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
+            out.close();
+            bmpUri = Uri.fromFile(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bmpUri;
+    }
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
+            return false;
+        }
     }
 }

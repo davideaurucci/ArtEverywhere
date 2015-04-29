@@ -44,14 +44,8 @@ public class RegisterArtist extends AsyncTask<Void, Void, MainArtistInfoMessage>
                 protected MainArtistInfoMessage doInBackground(Void... unused) {
                     // Retrieve service handle.
                     ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
-
-                    Log.d("DB","doInBack");
-                    
                     try {
-                        Log.d("LOG", "Sono qui");
-
                         MainArtistInfoMessage greeting = new MainArtistInfoMessage();
-
                         greeting.setEmail(email);
                         greeting.setCognome(cognome);
                         greeting.setNome(nome);
@@ -60,8 +54,6 @@ public class RegisterArtist extends AsyncTask<Void, Void, MainArtistInfoMessage>
                         if(nick.length() > 0) greeting.setNickname(nick);
                         if(bio.length() > 0) greeting.setBio(bio);
                         if(sito.length() > 0) greeting.setSito(sito);
-
-
 
                         ArtEverywhere.Registration.Registerartist get = apiServiceHandle.registration().registerartist(greeting);
 
@@ -90,7 +82,6 @@ public class RegisterArtist extends AsyncTask<Void, Void, MainArtistInfoMessage>
                     } else {
                         Toast.makeText(mContext, "Email già presente! Registrazione fallita!", Toast.LENGTH_LONG).show();
                         mCallback.done(false);
-                        //Toast.makeText(mContext, "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
                     }
                 }
 

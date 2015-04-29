@@ -5,11 +5,17 @@ package com.arteverywhere.francesco.art;
  */
 
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -112,7 +118,6 @@ public class Registration extends ActionBarActivity implements TaskCallbackRegis
             pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
             Editor editor = pref.edit();
             editor.putBoolean("token", true).commit();
-            //myIntent.putExtra("token",true);
             this.startActivity(myIntent);
             this.finish();
         }
@@ -150,7 +155,7 @@ public class Registration extends ActionBarActivity implements TaskCallbackRegis
                 bio = inserisciBiografia.getText().toString();
                 nickname = inserisciNick.getText().toString();
 
-                new RegisterArtist(getApplicationContext(), email, nome, cognome, nickname,foto,bio,sito, this).execute();
+                if (checkNetwork()) new RegisterArtist(getApplicationContext(), email, nome, cognome, nickname,foto,bio,sito, this).execute();
 
             }
             else {
@@ -160,6 +165,27 @@ public class Registration extends ActionBarActivity implements TaskCallbackRegis
         }
 
             return super.onOptionsItemSelected(item);
+    }
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
+            return false;
+        }
     }
 }
 

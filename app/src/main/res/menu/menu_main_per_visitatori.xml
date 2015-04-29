@@ -3,20 +3,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
 
-    <item android:id="@+id/artista"
-        android:title="Modalità artista"
-        android:orderInCategory="70"
-        app:showAsAction="never" />
-
     <item android:id="@+id/menu_filtro"
         android:title="Filtra"
         app:showAsAction="always"
         android:icon="@drawable/filter2"/>
 
+    <item android:id="@+id/artista"
+        android:title="Modalità artista"
+        app:showAsAction="always"
+        android:icon="@drawable/modalitaartista"
+        />
+
     <item android:id="@+id/menu_feedback"
         android:title="Invia Feedback"
         android:orderInCategory="100"
         app:showAsAction="never" />
+
+    <item android:id="@+id/menu_consiglia"
+        android:title="Consiglia AE"
+        android:orderInCategory="80"
+        app:showAsAction="never" />
+
+   <item android:id="@+id/menu_facebook"
+    android:title="Seguici su Facebook"
+    android:orderInCategory="80"
+    app:showAsAction="never" />
 
 
 </menu>

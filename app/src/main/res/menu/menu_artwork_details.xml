@@ -20,6 +20,7 @@
         android:icon="@drawable/share2"
         android:actionProviderClass="android.widget.ShareActionProvider" />
 
+
     <item
         android:id="@+id/menu_item_modifica"
         app:showAsAction="ifRoom"

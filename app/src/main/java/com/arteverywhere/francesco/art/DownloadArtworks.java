@@ -31,18 +31,9 @@ public class DownloadArtworks extends AsyncTask<Integer, Void, MainDownloadRespo
                 protected MainDownloadResponseCollection doInBackground(Integer... integers) {
                     // Retrieve service handle.
                     ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
-
-                    Log.d("DB","doInBack");
-                    
                     try {
                         ArtEverywhere.Display.Getphotos get = apiServiceHandle.display().getphotos((long)AppConstants.numFoto);
-
-                        //Log.d("LOG", "Sono qui");
                         MainDownloadResponseCollection greeting = get.execute();
-
-                        //Log.d("SIZE",""+greeting.size());
-                        //Log.d("LOG","Sono qui");
-
                         return greeting;
                     } catch (IOException e) {
                         Toast.makeText(mContext, "Exception during API call!", Toast.LENGTH_LONG).show();
@@ -53,17 +44,10 @@ public class DownloadArtworks extends AsyncTask<Integer, Void, MainDownloadRespo
 
                 protected void onPostExecute(MainDownloadResponseCollection greeting) {
                     if (greeting!=null) {
-                        //Log.d("SIZE", "" + greeting.size());
-                        //Log.d("NUM FOTO IN GREETING", "" + greeting.getPhotos().size());
-
-
                         int quanteFotoCaricate = greeting.getPhotos().size();
-
                             for(int i = 0; i < quanteFotoCaricate;i++){
-                                //System.out.println(i + "<>" + quanteFotoCaricate);
                                 String filename = greeting.getPhotos().get(i).getTitle();
                                 String photo = greeting.getPhotos().get(i).getUrl();
-                                //System.out.println(photo);
                                 String artista = greeting.getPhotos().get(i).getArtist();
                                 String descrizione = greeting.getPhotos().get(i).getDescr();
                                 String dimensioni = greeting.getPhotos().get(i).getDim();
@@ -75,9 +59,6 @@ public class DownloadArtworks extends AsyncTask<Integer, Void, MainDownloadRespo
                                Artwork art = new Artwork(filename,photo,artista,descrizione,dimensioni,luogo,tecnica,likes,data);
                                db.insert(art, db.getWritableDatabase());
                             }
-
-                            //Log.d("DB","<>getAllArt:" + db.getAllArtworks().size());
-
                             mCallback.done();
 
                     } else {

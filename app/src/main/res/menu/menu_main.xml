@@ -8,16 +8,26 @@
         android:orderInCategory="100"
         app:showAsAction="never" />
 
-    <!--
-    <item android:id="@+id/artista"
-        android:title="Modalità artista"
-        android:orderInCategory="70"
-        app:showAsAction="never" />
-    -->
     <item android:id="@+id/menu_feedback"
         android:title="Invia Feedback"
         android:orderInCategory="80"
         app:showAsAction="never" />
+
+    <item android:id="@+id/menu_facebook"
+        android:title="Seguici su Facebook"
+        android:orderInCategory="80"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/menu_valutaci"
+        android:title="Valutaci!"
+        android:orderInCategory="80"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/menu_consiglia"
+        android:title="Consiglia AE"
+        android:orderInCategory="80"
+        app:showAsAction="never" />
+
 
     <item android:id="@+id/menu_filtro"
         android:title="Filtra"

@@ -1,0 +1,192 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:background="#ffdcdee3"
+    tools:context="com.example.francesco.art.Registration">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+
+        android:background="@layout/custom_border"
+        android:gravity="fill_horizontal|fill_vertical"
+        android:id="@+id/lin">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Completa la registrazione"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:id="@+id/textView3"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center_horizontal" />
+
+
+        <ImageButton
+            android:id="@+id/immagine"
+            android:layout_width="200dp"
+            android:layout_height="170dp"
+            android:src="@raw/place_holder"
+            android:layout_marginTop="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:layout_below="@+id/textView3"
+            android:elevation="6dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nome:*"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_marginTop="15dp"
+            android:paddingLeft="10dp"
+            android:id="@+id/nome"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/insertNome"
+            android:paddingLeft="10dp"
+            android:hint="Inserisci nome"
+            android:layout_below="@+id/nome"
+            android:inputType="textCapSentences"
+            android:imeOptions="actionNext"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cognome:*"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_marginTop="5dp"
+            android:paddingLeft="10dp"
+            android:id="@+id/cognome"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/insertCognome"
+            android:paddingLeft="10dp"
+            android:hint="Inserisci cognome"
+            android:layout_below="@+id/cognome"
+            android:inputType="textCapSentences"
+            android:imeOptions="actionNext"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email:*"
+            android:id="@+id/email"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_marginTop="5dp"
+            android:paddingLeft="10dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Inserisci la tua email"
+            android:paddingLeft="10dp"
+            android:id="@+id/insertEmail"
+            android:layout_below="@+id/email"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="Nome d'arte:"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_marginTop="5dp"
+            android:paddingLeft="10dp"
+            android:id="@+id/nomearte"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/editText2"
+            android:hint="Inserisci il tuo nome d'arte."
+            android:maxLength="250"
+            android:paddingLeft="10dp"
+            android:layout_below="@+id/nomearte"
+            android:inputType="textCapSentences"
+            android:imeOptions="actionNext"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_marginTop="5dp"
+            android:paddingLeft="10dp"
+            android:text="Sito web:"
+            android:id="@+id/sito"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Inserisci il tuo sito web"
+            android:id="@+id/insertSito"
+            android:layout_below="@+id/sito"
+            android:paddingLeft="10dp"
+            android:imeOptions="actionNext"
+
+            />
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal"
+        android:id="@+id/linlay"
+        android:layout_below="@+id/editText"
+        android:layout_marginTop="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Biografia:"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:paddingLeft="10dp"
+                android:id="@+id/biografia"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="(0/500)"
+                android:id="@+id/contatore"
+                android:layout_alignParentRight="true"
+                android:textSize="10dp"
+                android:layout_marginLeft="5dp"/>
+        </LinearLayout>
+
+
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Inserisci la tua biografia"
+            android:id="@+id/insertBiografia"
+            android:layout_below="@+id/linlay"
+            android:paddingLeft="10dp"
+            android:maxLength="500"
+            android:inputType="textCapSentences"
+            android:imeOptions="actionNext"/>
+
+
+    </LinearLayout>
+
+
+</ScrollView>

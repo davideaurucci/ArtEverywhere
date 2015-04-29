@@ -1,10 +1,16 @@
 package com.arteverywhere.francesco.art;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -43,23 +49,14 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
         btnSignIn = (Button) findViewById(R.id.btn_sign_in);
         btnSignOut = (Button) findViewById(R.id.btn_sign_out);
-        //btnContinua = (Button) findViewById(R.id.btn_continua);
         accedi = (Button) findViewById(R.id.btn_login);
-
         btnRevokeAccess = (Button) findViewById(R.id.btn_revoke_access);
-
-
-        // Button click listeners
         btnSignIn.setOnClickListener(this);
         btnSignOut.setOnClickListener(this);
         btnRevokeAccess.setOnClickListener(this);
-        //btnContinua.setOnClickListener(this);
         accedi.setOnClickListener(this);
-
-
         pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
 
@@ -98,9 +95,6 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
         }
     }
 
-    /**
-     * Method to resolve any signin errors
-     * */
     private void resolveSignInError() {
         if (mConnectionResult.hasResolution()) {
             try {
@@ -121,7 +115,6 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
         }
 
         if (!mIntentInProgress) {
-            // Store the ConnectionResult for later usage
             mConnectionResult = result;
 
             if (mSignInClicked)
@@ -160,14 +153,9 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
 
     }
 
-
-    /**
-     * Fetching user's information name, email, profile pic
-     * */
     private void getProfileInformation() {
         try {
             if (Plus.PeopleApi.getCurrentPerson(mGoogleApiClient) != null) {
-                //System.out.println("NON è NULL");
                 Person currentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
                 String personPhotoUrl = currentPerson.getImage().getUrl();
                 String email = Plus.AccountApi.getAccountName(mGoogleApiClient);
@@ -175,19 +163,12 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
                 String cognome = currentPerson.getName().getFamilyName();
                 String nome = currentPerson.getName().getGivenName();
 
-
-                /*
-                Log.e(TAG, "Name: " + personName + ", plusProfile: "
-                        + personGooglePlusProfile + ", email: " + email
-                        + ", Image: " + personPhotoUrl);
-                */
-
                 personPhotoUrl = personPhotoUrl.substring(0, personPhotoUrl.length() - 6);
 
                 if(tokenLogin){ /* E' stato cliccato il bottone per effettuare il Login */
                     tokenLogin=false;
                     /* Devo verificare che la mail con cui l'utente ha effettuato l'accesso è presente nel nostro DB come artista */
-                    new CheckLogin(getApplicationContext(),email,this).execute();
+                    if(checkNetwork()) new CheckLogin(getApplicationContext(),email,this).execute();
 
                     /* Il risultato della chiamata CheckLogin lo trovo in done(boolean,string) */
                 }else { /* E' stato cliccalto il bottone per la registrazione */
@@ -228,7 +209,6 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_login, menu);
         return true;
     }
@@ -240,34 +220,25 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_sign_in:
-                // Signin button clicked
                 signInWithGplus();
                 break;
-            /*case R.id.btn_continua:
-                //AVVIA APP COME VISITATORE
-                avviaGallery(true);*/
+
 
             case R.id.btn_sign_out:
-                // Signout button clicked
                 signOutFromGplus();
                 break;
 
             case R.id.btn_revoke_access:
-                // Revoke access button clicked
                 revokeGplusAccess();
                 break;
 
             case R.id.btn_login:
-                //autenticazione();
                 tokenLogin = true;
                 signInWithGplus();
                 break;
         }
     }
 
-    /**
-     * Sign-in into google
-     * */
     private void signInWithGplus() {
         if (!mGoogleApiClient.isConnecting()) {
             mSignInClicked = true;
@@ -275,9 +246,6 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
         }
     }
 
-    /**
-     * Sign-out from google
-     * */
     public void signOutFromGplus() {
         if (mGoogleApiClient.isConnected()) {
             Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
@@ -286,9 +254,7 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
         }
     }
 
-    /**
-     * Revoking access from google
-     * */
+
     private void revokeGplusAccess() {
         if (mGoogleApiClient.isConnected()) {
             Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
@@ -305,11 +271,6 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
     }
 
 
-    private void avviaGallery(boolean visitatore){
-        Intent myIntent = new Intent(Login.this, MainActivity.class);
-        myIntent.putExtra("visitatore",visitatore);
-        this.startActivity(myIntent);
-   }
 
     private void avviaGallery2(){
         Intent myIntent = new Intent(Login.this, MainActivity.class);
@@ -338,5 +299,26 @@ public class Login extends Activity implements OnClickListener, ConnectionCallba
     public void onBackPressed(){
         System.exit(0);
         return;
+    }
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
+            return false;
+        }
     }
 }

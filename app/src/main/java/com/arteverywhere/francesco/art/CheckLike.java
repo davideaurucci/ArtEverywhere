@@ -39,7 +39,7 @@ public class CheckLike extends AsyncTask<Integer, Void, MainGeneralLikeResponse>
             return risposta;
 
         } catch (IOException e) {
-            Toast.makeText(mContext, "Exception during API call!", Toast.LENGTH_LONG).show();
+            //Toast.makeText(mContext, "Exception during API call!", Toast.LENGTH_LONG).show();
         }
         return null;
     }

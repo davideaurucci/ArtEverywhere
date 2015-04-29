@@ -4,6 +4,7 @@ package com.arteverywhere.francesco.art;
  * Created by Francesco on 11/02/2015.
  */
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -32,12 +33,8 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         // SQL statement to create book table
-            Log.d("DB","creo tabella");
-
-            //String DELETE_ARTWORK_TABLE = "DELETE * from artworks";
-            //String DELETE_ARTWORK_TABLE = "DROP TABLE IF EXISTS artworks";
-
-            String CREATE_ARTWORK_TABLE = "CREATE TABLE IF NOT EXISTS artworks ( " +
+        Log.d("DB","creo tabella");
+        String CREATE_ARTWORK_TABLE = "CREATE TABLE IF NOT EXISTS artworks ( " +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "filename TEXT, "+
                 "photo TEXT, " +
@@ -52,8 +49,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
 
 
         //prima di creare una tabella, cancello quella precedente
-       // db.execSQL(DELETE_ARTWORK_TABLE);
-        //db.delete("artworks",null,null );
         db.execSQL(CREATE_ARTWORK_TABLE);
 
     }
@@ -62,10 +57,7 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d("DB","upgrade");
-        // Drop older books table if existed
         db.execSQL("DROP TABLE IF EXISTS artworks");
-
-        // create fresh books table
         this.onCreate(db);
     }
 
@@ -74,7 +66,7 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
     }
 
     public void removeArtwork(String url, SQLiteDatabase db){
-        db.delete(TABLE_ARTWORKS, "photo"+ " = ?", new String[]{url} );
+        db.delete(TABLE_ARTWORKS, "photo" + " = ?", new String[]{url});
 
     }
 
@@ -136,8 +128,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        //Log.d("getAllBooks()", artworks.toString());
-
         // return books
         return artworks;
     }
@@ -145,7 +135,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
     public String[] getPhotos() {
         //List<Artwork> artworks = new LinkedList<Artwork>();
         String[] photos = new String[AppConstants.numFoto];
-
 
         // 1. build the query
         String query = "SELECT photo FROM " + TABLE_ARTWORKS;
@@ -156,7 +145,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(query, null);
 
         // 3. go over each row, build book and add it to list
-        //Artwork artwork = null;
         String ph;
         int i = 0;
         if (cursor.moveToFirst()) {
@@ -169,16 +157,12 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        //Log.d("get All Photos()", "lunghezza"+photos.length);
-
         // return books
         return photos;
     }
 
     public String[] getPhotosAfterScroll(int num) {
-        //List<Artwork> artworks = new LinkedList<Artwork>();
         String[] photos = new String[num];
-
 
         // 1. build the query
         String query = "SELECT photo FROM " + TABLE_ARTWORKS;
@@ -189,14 +173,12 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(query, null);
 
         // 3. go over each row, build book and add it to list
-        //Artwork artwork = null;
         String ph;
         int i = 0;
         int c=0;
         if (cursor.moveToFirst()) {
             do {
                 ph = cursor.getString(0);
-
                 // Add photo to photos
                 if(ph!=null) c++;
                 photos[i]=ph;
@@ -205,39 +187,30 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        //Log.d("get All Photos()", "lunghezza"+photos.length);
-
         // return books
         String [] foto;
         if (c>=i+1){
-            //vuol dire che ci sono più foto "valide" di quelle che volevamo. ne prendo una parte.
             foto=new String[i+1];
-            //System.out.println("NUMEROi "+ (i+1));
             for(int t=0; t<i+1; t++){
                 foto[t]=photos[t];
             }
         }
         else{
             foto=new String[c];
-            //System.out.println("NUMEROc "+ c);
             for(int t=0; t<c; t++){
                 foto[t]=photos[t];
             }
         }
-
-        //System.out.println("TAGLIA FOTO "+foto.length);
         return foto;
     }
 
     public Artwork getArtworkFromUrl(String url) {
 
         // 1. build the query
-        //String query = "SELECT * FROM " + TABLE_ARTWORKS + "WHERE photo="+ url;
         String query = "SELECT * FROM " + TABLE_ARTWORKS + " WHERE photo=? ";
 
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-        //Cursor cursor = db.rawQuery(query, null);
         Cursor cursor = db.rawQuery(query, new String[] { url });
 
         // 3. go over each row, build book and add it to list
@@ -260,14 +233,11 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        //Log.d("get artwork", artwork.toString());
-        // return artwork
         return artwork;
     }
 
 
     public String[] getArtworksOrderByDate(){
-        //List<Artwork> artworks = new LinkedList<Artwork>();
         String[] photos = new String[AppConstants.numFoto];
 
         // 1. build the query
@@ -279,7 +249,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(query, null);
 
         // 3. go over each row, build book and add it to list
-        //Artwork artwork = null;
         String ph;
         int i = 0;
         if (cursor.moveToFirst()) {
@@ -292,9 +261,35 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        //Log.d("get All Photos()", "lunghezza"+photos.length);
-
         // return books
+        return photos;
+    }
+
+
+    public String[] getArtworksOrderByDate(int c){
+        String[] photos = new String[c];
+
+        // 1. build the query
+        String query = "SELECT photo FROM " + TABLE_ARTWORKS + " ORDER BY data DESC";
+        //String query = "SELECT * FROM " + TABLE_ARTWORKS;
+
+        // 2. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        // 3. go over each row, build book and add it to list
+        String ph;
+        int i = 0;
+        if (cursor.moveToFirst()) {
+            do {
+                ph = cursor.getString(0);
+
+                // Add photo to photos
+                photos[i] = ph;
+                if(i!=(c-1)) i++;
+            } while (cursor.moveToNext());
+        }
+
         return photos;
     }
 
@@ -303,14 +298,12 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
         String data = "";
         // 1. build the query
         String query = "SELECT data FROM " + TABLE_ARTWORKS + " ORDER BY data DESC LIMIT 1";
-        //String query = "SELECT * FROM " + TABLE_ARTWORKS;
 
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(query, null);
 
         // 3. go over each row, build book and add it to list
-        //Artwork artwork = null;
         String d;
         if (cursor.moveToFirst()) {
             do {
@@ -318,10 +311,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
                 data = d;
             } while (cursor.moveToNext());
         }
-
-        Log.d("Most recent data", data);
-
-        // return books
         return data;
     }
 
@@ -329,32 +318,25 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
     public String[] getArtworksFromTechinique(String tecnica) {
 
         // 1. build the query
-        //String query = "SELECT * FROM " + TABLE_ARTWORKS + "WHERE photo="+ url;
         String query = "SELECT count(*) FROM " + TABLE_ARTWORKS + " WHERE tecnica=? ";
 
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-        //Cursor cursor = db.rawQuery(query, null);
         Cursor cursor = db.rawQuery(query, new String[] { tecnica });
-
         // 3. go over each row, build book and add it to list
         int quanteFoto = 0;
         if (cursor.moveToFirst()) {
             do {
                 quanteFoto = Integer.parseInt(cursor.getString(0));
-                //System.out.println("**"+quanteFoto);
             } while (cursor.moveToNext());
 
-            //System.out.println("**"+quanteFoto);
         }
 
         // 1. build the query
-        //String query = "SELECT * FROM " + TABLE_ARTWORKS + "WHERE photo="+ url;
         String query2 = "SELECT photo FROM " + TABLE_ARTWORKS + " WHERE tecnica=? ";
 
         // 2. get reference to writable DB
         SQLiteDatabase db2 = this.getWritableDatabase();
-        //Cursor cursor = db.rawQuery(query, null);
         Cursor cursor2 = db2.rawQuery(query2, new String[] { tecnica });
 
         // 3. go over each row, build book and add it to list
@@ -374,9 +356,6 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
             } while (cursor2.moveToNext());
         }
 
-        //Log.d("get artwork", artwork.toString());
-
-        // return artwork
         return photos;
     }
 
@@ -384,12 +363,10 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
     public String[] getArtworksFromPlace(String luogo) {
 
         // 1. build the query
-        //String query = "SELECT * FROM " + TABLE_ARTWORKS + "WHERE photo="+ url;
         String query = "SELECT count(*) FROM " + TABLE_ARTWORKS + " WHERE luogo=? ";
 
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-        //Cursor cursor = db.rawQuery(query, null);
         Cursor cursor = db.rawQuery(query, new String[] { luogo });
 
         // 3. go over each row, build book and add it to list
@@ -399,17 +376,13 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
                 quanteFoto = Integer.parseInt(cursor.getString(0));
                 //System.out.println("**"+quanteFoto);
             } while (cursor.moveToNext());
-
-            //System.out.println("**"+quanteFoto);
         }
 
         // 1. build the query
-        //String query = "SELECT * FROM " + TABLE_ARTWORKS + "WHERE photo="+ url;
         String query2 = "SELECT photo FROM " + TABLE_ARTWORKS + " WHERE luogo=? ";
 
         // 2. get reference to writable DB
         SQLiteDatabase db2 = this.getWritableDatabase();
-        //Cursor cursor = db.rawQuery(query, null);
         Cursor cursor2 = db2.rawQuery(query2, new String[] { luogo });
 
         // 3. go over each row, build book and add it to list
@@ -428,10 +401,76 @@ public class DatabaseArtwork extends SQLiteOpenHelper {
                 i++;
             } while (cursor2.moveToNext());
         }
-
-        //Log.d("get artwork", artwork.toString());
-
-        // return artwork
         return photos;
     }
+
+    public String[] getArtworksOfArtist(String arti) {
+        // 1. build the query
+        String query = "SELECT distinct count(*) FROM " + TABLE_ARTWORKS + " WHERE artista=? ";
+
+        // 2. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, new String[] { arti });
+
+        // 3. go over each row, build book and add it to list
+        int quanteFoto = 0;
+        if (cursor.moveToFirst()) {
+            do {
+                quanteFoto = Integer.parseInt(cursor.getString(0));
+            } while (cursor.moveToNext());
+        }
+
+        // 1. build the query
+        String query2 = "SELECT distinct photo FROM " + TABLE_ARTWORKS + " WHERE artista=? ";
+
+        // 2. get reference to writable DB
+        SQLiteDatabase db2 = this.getWritableDatabase();
+        Cursor cursor2 = db2.rawQuery(query2, new String[] { arti });
+
+        // 3. go over each row, build book and add it to list
+        /*String[] photos;
+        if(quanteFoto < AppConstants.numFoto){
+            photos = new String[quanteFoto];
+        }else{
+            photos = new String[AppConstants.numFoto];
+        }*/
+        String[] photos = new String[quanteFoto];
+
+        int i = 0;
+        if (cursor2.moveToFirst()) {
+            do {
+                String d = cursor2.getString(0);
+                photos[i] = d;
+                i++;
+            } while (cursor2.moveToNext());
+        }
+        return photos;
+    }
+    public void setArtworkFromUrl(String url, Artwork artwork){
+        SQLiteDatabase db=this.getWritableDatabase();
+        // define the new value you want
+        ContentValues newValues = new ContentValues();
+        newValues.put("filename", artwork.getFilename());
+        newValues.put("descrizione", artwork.getDescrizione());
+        newValues.put("likes", artwork.getLikes());
+        newValues.put("tecnica", artwork.getTecnique());
+        newValues.put("luogo", artwork.getLuogo());
+        newValues.put("dimensioni", artwork.getDimensioni());
+        // you can .put() even more here if you want to update more than 1 row
+
+        // define the WHERE clause w/o the WHERE and replace variables by ?
+        // Note: there are no ' ' around ? - they are added automatically
+        String whereClause = "photo == ?";
+
+        // now define what those ? should be
+        String[] whereArgs = new String[] {
+                // in order the ? appear
+                url
+        };
+
+        db.update(TABLE_ARTWORKS, newValues, whereClause, whereArgs);
+
+
+    }
+
 }

@@ -12,6 +12,7 @@
         android:title="Like"
         android:icon="@drawable/unliked"></item>
 
+
     <item
         android:id="@+id/menu_item_share"
         app:showAsAction="always"
@@ -19,6 +20,12 @@
         android:title="Share"
         android:actionProviderClass=
             "android.widget.ShareActionProvider" />
+
+    <item
+        android:id="@+id/menu_item_segnala"
+        app:showAsAction="never"
+        android:title="Segnala"
+         />
 
 
 </menu>

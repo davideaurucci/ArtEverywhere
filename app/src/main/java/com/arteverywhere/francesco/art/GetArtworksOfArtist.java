@@ -14,77 +14,75 @@ import cod.com.appspot.art_everywhere.artEverywhere.model.MainPictureDetailsColl
  * Created by Francesco on 11/02/2015.
  */
 public class GetArtworksOfArtist extends AsyncTask<String, Void, MainPictureDetailsCollection> {
-                Context mContext;
-                String mail;
-                TaskCallbackArtworksOfArtist mCallback;
+    Context mContext;
+    String mail;
+    DatabaseArtwork db;
+    TaskCallbackArtworksOfArtist mCallback;
 
-                public GetArtworksOfArtist(Context context) {
-                    mContext = context;
+    public GetArtworksOfArtist(Context context) {
+        mContext = context;
+    }
+
+    public GetArtworksOfArtist(Context context, String mail,DatabaseArtwork db, TaskCallbackArtworksOfArtist mCallback) {
+        mContext = context;
+        this.mail = mail;
+        this.db = db;
+        this.mCallback = mCallback;
+    }
+
+    protected MainPictureDetailsCollection doInBackground(String... strings) {
+        // Retrieve service handle.
+        ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
+        try {
+            ArtEverywhere.Artworks.Getartworks get = apiServiceHandle.artworks().getartworks(mail);
+            MainPictureDetailsCollection greeting = get.execute();
+            return greeting;
+        } catch (IOException e) {
+            Toast.makeText(mContext, "Exception during API call!", Toast.LENGTH_LONG).show();
+        }
+        return null;
+    }
+
+
+    protected void onPostExecute(MainPictureDetailsCollection greeting) {
+        if (greeting!=null) {
+
+            if(greeting.getPhotos() == null){
+                mCallback.done(null);
+                return;
+            }
+
+            int quanteFotoCaricate = greeting.getPhotos().size();
+            for(int i = 0; i < quanteFotoCaricate;i++){
+                String filename = greeting.getPhotos().get(i).getTitle();
+                String photo = greeting.getPhotos().get(i).getUrl();
+                String artista = greeting.getPhotos().get(i).getArtist();
+                String descrizione = greeting.getPhotos().get(i).getDescr();
+                String dimensioni = greeting.getPhotos().get(i).getDim();
+                String luogo = greeting.getPhotos().get(i).getLuogo();
+                String tecnica = greeting.getPhotos().get(i).getTechnique();
+                long likes = greeting.getPhotos().get(i).getLikes();
+                String data = greeting.getPhotos().get(i).getDateTime();
+                Artwork art = new Artwork(filename,photo,artista,descrizione,dimensioni,luogo,tecnica,likes,data);
+                if(controllo(art)) {
+                    db.insert(art, db.getWritableDatabase());
                 }
 
-                public GetArtworksOfArtist(Context context, String mail, TaskCallbackArtworksOfArtist mCallback) {
-                    mContext = context;
-                    this.mail = mail;
-                    this.mCallback = mCallback;
-                }
+            }
 
-                protected MainPictureDetailsCollection doInBackground(String... strings) {
-                    // Retrieve service handle.
-                    ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
+            String[] urlPhoto = db.getArtworksOfArtist(mail);
+            mCallback.done(urlPhoto);
 
-                    Log.d("DB","doInBack");
-                    
-                    try {
-                        ArtEverywhere.Artworks.Getartworks get = apiServiceHandle.artworks().getartworks(mail);
-                        Log.d("LOG", "Sono qui");
-                        MainPictureDetailsCollection greeting = get.execute();
+        } else {
+            Toast.makeText(mContext, "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
+        }
+    }
 
-                        Log.d("SIZE",""+greeting.size());
-                        Log.d("LOG","Sono qui");
-
-                        return greeting;
-                    } catch (IOException e) {
-                        Toast.makeText(mContext, "Exception during API call!", Toast.LENGTH_LONG).show();
-                    }
-                    return null;
-                }
-
-
-                protected void onPostExecute(MainPictureDetailsCollection greeting) {
-                    if (greeting!=null) {
-
-                        if(greeting.getPhotos() == null){
-                            mCallback.done(null);
-                            return;
-                        }
-
-                        int quanteFotoCaricate = greeting.getPhotos().size();
-                        String[] urlPhoto = new String[quanteFotoCaricate];
-                        for(int i = 0; i < quanteFotoCaricate; i++){
-                            String url = greeting.getPhotos().get(i).getUrl();
-                            urlPhoto[i] = url;
-                        }
-                         /* SCARICO LE ULTIME 4 FOTO
-                        String[] urlPhoto = new String[4];
-
-                            if(quanteFotoCaricate < 4){
-                                for (int i = 0; i < quanteFotoCaricate; i++) {
-                                    String url = greeting.getPhotos().get(i).getPhoto();
-                                    urlPhoto[i] = url;
-                                }
-                            }else {
-                                for (int i = 0; i < 4; i++) {
-                                    String url = greeting.getPhotos().get(i).getPhoto();
-                                    urlPhoto[i] = url;
-                                }
-                            }
-                        */
-
-                            mCallback.done(urlPhoto);
-
-                    } else {
-                        Toast.makeText(mContext, "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
-                    }
-                }
+    public boolean controllo(Artwork art){
+        if(db.getArtworkFromUrl(art.getPhoto()) == null){
+            return true;
+        }
+        return false;
+    }
 
 }

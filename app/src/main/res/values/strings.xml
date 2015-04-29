@@ -15,4 +15,6 @@
 
     <string name="app_id">870148833050070</string>
     <string name="progress_dialog_text">Sharing story, please wait.</string>
+    <string name="title_activity_alert">Alert</string>
+    <string name="title_activity_network_checker">NetworkChecker</string>
 </resources>

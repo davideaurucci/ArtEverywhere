@@ -31,24 +31,13 @@ public class DownloadArtworksForRefresh extends AsyncTask<Integer, Void, MainDow
                 protected MainDownloadResponseCollection doInBackground(Integer... integers) {
                     // Retrieve service handle.
                     ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
-
-                    Log.d("DB","doInBack");
-                    
                     try {
-                        /* Recupero la data dell'artwork più recente nel db locale e aumento di 10 secondi per poter
-                           chiamare la funzione di libreria in modo corretto
-                         */
                         String data = db.getMostRecentDate();
                         int sec = Character.getNumericValue(data.charAt(17));
                         int new_sec = sec + 1;
                         String final_data = data.substring(0,17) + "" + new_sec + data.charAt(18);
-
                         ArtEverywhere.Refresh.Refreshphotos get = apiServiceHandle.refresh().refreshphotos((long)AppConstants.numFoto, final_data);
                         MainDownloadResponseCollection greeting = get.execute();
-
-                        //Log.d("SIZE",""+greeting.size());
-                        //Log.d("LOG","Sono qui");
-
                         return greeting;
                     } catch (IOException e) {
                         Toast.makeText(mContext, "Exception during API call!", Toast.LENGTH_LONG).show();
@@ -59,17 +48,12 @@ public class DownloadArtworksForRefresh extends AsyncTask<Integer, Void, MainDow
 
                 protected void onPostExecute(MainDownloadResponseCollection greeting) {
                     if (greeting!=null) {
-                        //Log.d("SIZE", "" + greeting.size());
-                        //Log.d("NUM FOTO IN GREETING", "" + greeting.getPhotos().size());
-
-                        if(greeting.getPhotos() == null){
-                            Toast.makeText(mContext, "Nessun nuovo artwork!", Toast.LENGTH_LONG).show();
-                            return;
+                      if(greeting.getPhotos() == null){
+                          Toast.makeText(mContext, "Nessun nuovo artwork!", Toast.LENGTH_LONG).show();
+                          return;
                         }
                         int quanteFotoCaricate = greeting.getPhotos().size();
-
                             for(int i = 0; i < quanteFotoCaricate;i++){
-                                //System.out.println(i + "<>" + quanteFotoCaricate);
                                 String filename = greeting.getPhotos().get(i).getTitle();
                                 String photo = greeting.getPhotos().get(i).getUrl();
                                 System.out.println(photo);
@@ -84,9 +68,6 @@ public class DownloadArtworksForRefresh extends AsyncTask<Integer, Void, MainDow
                                Artwork art = new Artwork(filename,photo,artista,descrizione,dimensioni,luogo,tecnica,likes,data);
                                db.insert(art, db.getWritableDatabase());
                             }
-
-                            Log.d("DB","<>getAllArt:" + db.getAllArtworks().size());
-
                             mCallback.done(false,false);
 
                     } else {

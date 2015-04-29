@@ -1,6 +1,5 @@
 package com.arteverywhere.francesco.art;
 
-
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -11,19 +10,23 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.pm.Signature;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.Settings;
+import android.support.v4.app.ShareCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Base64;
@@ -62,17 +65,21 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 
-public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLike, TaskCallbackDelete,TaskCallbackCheckLike, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, TaskCallbackDownloadArtist, TaskCallbackInsertComment, AdapterView.OnItemClickListener, TaskCallbackDownloadComments, TaskCallbackDownloadArtworks {
+
+public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLike, TaskCallbackDelete,TaskCallbackCheckLike, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, TaskCallbackDownloadArtist, TaskCallbackInsertComment, AdapterView.OnItemClickListener, TaskCallbackDownloadComments, TaskCallbackDownloadArtworks, TaskCallbackDownloadLikes {
     ImageView img;
     ImageView imgArtista;
     TextView titolo;
@@ -81,7 +88,7 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     TextView tecnica;
     TextView luogo;
     TextView size;
-
+    String titoloArtwork;
     TextView piace;
     String artista;
     AlertDialog dialog;
@@ -89,7 +96,10 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     MenuItem menu;
 
     private UiLifecycleHelper uiHelper;
+
     private PopupWindow popWindow;
+    private PopupWindow popWindowL;
+
 
     String url;
     Artwork artwork;
@@ -104,9 +114,13 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     String[] listaDate;
     String email;
 
+    String[] listaPicL;
+    String[] listaEmailL;
+    String[] listaAutoriL;
+
     //per verificare se l'utente ha messo un like sull'artwork in precedenza, così da fargli vedere il bottone in un certo modo.
     boolean messoLike;
-    boolean fatto=false;
+    boolean fatto = false;
 
     private static final int RC_SIGN_IN = 0;
     private static final String TAG = "LoginVisitatore";
@@ -127,6 +141,8 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     String[] timeAgo;
     String[] listaPic;
     String[] listaEmail;
+    String[] listaId;
+
 
     private TaskCallbackLike l;
     private TaskCallbackCheckLike check;
@@ -141,7 +157,8 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artwork_details);
-        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE);
+        //BLOCCA SCREENSHOT
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE);
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -157,14 +174,13 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
 
         DatabaseArtwork db = new DatabaseArtwork(getApplicationContext());
         artwork = db.getArtworkFromUrl(url);
-        titolo = (TextView)findViewById(R.id.textView3);
-        boolean modifica=false;
-        if(getIntent().getExtras().get("titolomod")!=null){
+        titolo = (TextView) findViewById(R.id.textView3);
+        boolean modifica = false;
+        if (getIntent().getExtras().get("titolomod") != null) {
             titolo.setText(getIntent().getExtras().get("titolomod").toString());
             artwork.setFilename(titolo.getText().toString());
-            modifica=true;
+            modifica = true;
         }
-
 
         /* VISUALIZZO ACTION BAR CON LOGO */
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -175,119 +191,74 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         getSupportActionBar().setTitle(artwork.getFilename());
 
 
-
-
-        img = (ImageView)findViewById(R.id.imageView);
-        imgArtista = (ImageView)findViewById(R.id.imageView2);
-
-
-        nomeArtista = (TextView)findViewById(R.id.textView4);
-        descrizione = (TextView)findViewById(R.id.desc);
-        tecnica = (TextView)findViewById(R.id.tec);
-        luogo = (TextView)findViewById(R.id.luogo);
-        size = (TextView)findViewById(R.id.size);
+        img = (ImageView) findViewById(R.id.imageView);
+        imgArtista = (ImageView) findViewById(R.id.imageView2);
+        nomeArtista = (TextView) findViewById(R.id.textView4);
+        descrizione = (TextView) findViewById(R.id.desc);
+        tecnica = (TextView) findViewById(R.id.tec);
+        luogo = (TextView) findViewById(R.id.luogo);
+        size = (TextView) findViewById(R.id.size);
 
         pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
 
         //email dell'artista loggato
-        email = pref.getString("email_artista",null);
+        email = pref.getString("email_artista", null);
 
-        if(email != null){
+        if (email != null) {
             CheckLike ch = new CheckLike(url, email, getApplicationContext(), check);
-            ch.execute();
-        }else{
+            if(checkNetwork()) ch.execute();
+        } else {
             visitatore = true;
 
         }
 
-
-        /*
         tecnica.setText("Tecnica: " + artwork.getTecnique());
 
-        if(artwork.getDescrizione().equals("null")){
-            descrizione.setText("Descrizione non disponibile");
-        }else{
-            descrizione.setText("Descrizione: " + artwork.getDescrizione());
-        }
-
-        if(artwork.getLuogo().equals("null")){
-            luogo.setText("Luogo non disponibile");
-        }else{
-            luogo.setText("Luogo: " + artwork.getLuogo());
-        }
-
-        if(artwork.getDimensioni().equals("null")){
-            size.setVisibility(View.GONE);
-        }else{
-            size.setText("Dimensioni: "+ artwork.getDimensioni());
-        }
-
-        long likes = artwork.getLikes();
-        if (likes != 0) {
-            if (likes == 1)
-                piace.setText("Piace a " + likes + " persona");
-            else
-                piace.setText("Piace a " + likes + " persone");
-        }else{
-            piace.setVisibility(View.GONE);
-        }
-        */
-
-
-
-        tecnica.setText("Tecnica: " + artwork.getTecnique());
-
-        if(getIntent().getExtras().get("descmod")!=null){
-            String de=getIntent().getExtras().get("descmod").toString();
-            if(de.equals("")) {
+        if (getIntent().getExtras().get("descmod") != null) {
+            String de = getIntent().getExtras().get("descmod").toString();
+            if (de.equals("")) {
                 descrizione.setText("Descrizione non disponibile");
                 artwork.setDescrizione("null");
-            }
-            else {
+            } else {
                 artwork.setDescrizione(de);
                 descrizione.setText("Descrizione: " + de);
             }
-            modifica=true;
-        }
-        else if (artwork.getDescrizione().equals("null") ||artwork.getDescrizione().equals("") || artwork.getDescrizione().equals("Descrizione")) {
+            modifica = true;
+        } else if (artwork.getDescrizione().equals("null") || artwork.getDescrizione().equals("") || artwork.getDescrizione().equals("Descrizione")) {
             descrizione.setText("Descrizione non disponibile");
 
-        }  else {
+        } else {
             descrizione.setText("Descrizione: " + artwork.getDescrizione());
         }
 
-        if(getIntent().getExtras().get("luogomod")!=null){
-            String lu=getIntent().getExtras().get("luogomod").toString();
-            if(lu.equals("")){
+        if (getIntent().getExtras().get("luogomod") != null) {
+            String lu = getIntent().getExtras().get("luogomod").toString();
+            if (lu.equals("")) {
                 luogo.setText("Luogo non disponibile");
                 artwork.setLuogo("null");
-            }
-            else {
+            } else {
                 artwork.setLuogo(lu);
                 luogo.setText("Luogo: " + lu);
             }
-            modifica=true;
-        }
-        else if (artwork.getLuogo().equals("null") || artwork.getLuogo().equals("") || artwork.getLuogo().equals("Luogo")) {
+            modifica = true;
+        } else if (artwork.getLuogo().equals("null") || artwork.getLuogo().equals("") || artwork.getLuogo().equals("Luogo")) {
             luogo.setText("Luogo non disponibile");
         } else {
             luogo.setText("Luogo: " + artwork.getLuogo());
         }
 
-        if(getIntent().getExtras().get("dimmod")!=null){
-            String di=getIntent().getExtras().get("dimmod").toString();
-            if(di.equals("")) {
+        if (getIntent().getExtras().get("dimmod") != null) {
+            String di = getIntent().getExtras().get("dimmod").toString();
+            if (di.equals("")) {
                 size.setVisibility(View.GONE);
                 artwork.setDimensioni("null");
-            }
-            else {
+            } else {
                 artwork.setDimensioni(di);
                 size.setText("Dimensioni: " + di);
             }
-            modifica=true;
-        }
-        else if (artwork.getDimensioni().equals("null") || artwork.getDimensioni().equals("") || artwork.getDimensioni().equals("Dimensioni")) {
+            modifica = true;
+        } else if (artwork.getDimensioni().equals("null") || artwork.getDimensioni().equals("") || artwork.getDimensioni().equals("Dimensioni")) {
             size.setVisibility(View.GONE);
         } else {
             size.setText("Dimensioni: " + artwork.getDimensioni());
@@ -295,13 +266,15 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
 
 
         //per modificare l'artwork anche nel database locale.
-        if(modifica){
-            db.removeArtwork(url, db.getWritableDatabase());
-            db.insert(artwork, db.getWritableDatabase());
+        if (modifica) {
+            /*db.removeArtwork(url, db.getWritableDatabase());
+            db.insert(artwork, db.getWritableDatabase());*/
+            db.setArtworkFromUrl(url, artwork);
+
         }
 
         //ora posso eseguire il display corretto.
-        new DownloadArtist(getApplicationContext(),artwork.getArtista(),this).execute();
+        if(checkNetwork()) new DownloadArtist(getApplicationContext(), artwork.getArtista(), this).execute();
         //
 
         long likes = artwork.getLikes();
@@ -311,7 +284,7 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                 piace.setText("Piace a " + likes + " persona");
             else
                 piace.setText("Piace a " + likes + " persone");
-        }else{
+        } else {
             piace.setVisibility(View.GONE);
         }
 
@@ -321,23 +294,31 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
 
         commenti = (TextView) findViewById(R.id.commenti);
         commentoInScrittura = (EditText) findViewById(R.id.new_comment);
-        btnOkComment=(Button) findViewById(R.id.bottone_new_comment);
+        btnOkComment = (Button) findViewById(R.id.bottone_new_comment);
 
         commenti.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(listaCommenti != null){
+                if (listaCommenti != null) {
                     onShowPopup(v);
-                }else{
+                } else {
                     Toast.makeText(getApplicationContext(), "Nessun commento da visualizzare", Toast.LENGTH_LONG).show();
                 }
             }
         });
 
+        piace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(listaAutoriL != null){
+                    onShowPopupLike(v);
+                }
+            }
+        });
 
 
-       final TaskCallbackInsertComment callComment = this;
-       btnOkComment.setOnClickListener(new View.OnClickListener() {
+        final TaskCallbackInsertComment callComment = this;
+        btnOkComment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (v.getId() == R.id.bottone_new_comment) {
@@ -348,28 +329,28 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                     email = pref.getString("email_artista", null);
 
                     titleBox = (EditText) findViewById(R.id.new_comment);
-                    if(email == null){ //se è null non è un artista, ma un visitatore. Devo fargli fare il login!
+                    if (email == null) { //se è null non è un artista, ma un visitatore. Devo fargli fare il login!
                         System.out.println("SONO VISITATORE");
-                        forComment=true;
-                        if(!mGoogleApiClient.isConnected()){
+                        forComment = true;
+                        if (!mGoogleApiClient.isConnected()) {
                             signInWithGplus();
-                        }else{
+                        } else {
                             getProfileInformation();
                         }
 
-                    }else {
-                        if(visitatore){
+                    } else {
+                        if (visitatore) {
                             String commentoInScrittura = titleBox.getText().toString();
                             if (commentoInScrittura.length() > 1) {
-                                new InsertComment(getApplicationContext(), emailPersona, commentoInScrittura, url, callComment).execute();
+                                if(checkNetwork()) new InsertComment(getApplicationContext(), emailPersona, commentoInScrittura, url, callComment).execute();
                                 commentoInScrittura = "";
                             } else {
                                 Toast.makeText(getApplicationContext(), "Commento non può essere vuoto!", Toast.LENGTH_LONG).show();
                             }
-                        }else{
+                        } else {
                             String commentoInScrittura = titleBox.getText().toString();
                             if (commentoInScrittura.length() > 1) {
-                                new InsertComment(getApplicationContext(), email, commentoInScrittura, url, callComment).execute();
+                                if(checkNetwork()) new InsertComment(getApplicationContext(), email, commentoInScrittura, url, callComment).execute();
                                 commentoInScrittura = "";
                             } else {
                                 Toast.makeText(getApplicationContext(), "Commento non può essere vuoto!", Toast.LENGTH_LONG).show();
@@ -378,28 +359,11 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                     }
                     btnOkComment.setEnabled(true);
 
-               }
+                }
             }
         });
     }
 
-    /*
-    private void printKeyHash() {
-        // Add code to print out the key hash
-        try {
-            PackageInfo info = getPackageManager().getPackageInfo("com.arteverywhere.francesco.art", PackageManager.GET_SIGNATURES);
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e("KeyHash:", e.toString());
-        } catch (NoSuchAlgorithmException e) {
-            Log.e("KeyHash:", e.toString());
-        }
-    }
-    */
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -459,7 +423,7 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             if (!mGoogleApiClient.isConnecting()) {
                 mGoogleApiClient.connect();
             }
-        }else{
+        } else {
             super.onActivityResult(requestCode, responseCode, intent);
 
             uiHelper.onActivityResult(requestCode, responseCode, intent, new FacebookDialog.Callback() {
@@ -476,7 +440,6 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         }
 
 
-
     }
 
     @Override
@@ -485,33 +448,29 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         getProfileInformation();
     }
 
-
     /**
      * Fetching user's information name, email, profile pic
-     * */
+     */
     private void getProfileInformation() {
         try {
             if (Plus.PeopleApi.getCurrentPerson(mGoogleApiClient) != null) {
                 System.out.println("NON è NULL");
                 //Person currentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
-                 emailPersona = Plus.AccountApi.getAccountName(mGoogleApiClient);
+                emailPersona = Plus.AccountApi.getAccountName(mGoogleApiClient);
                 //System.out.println("*email:" + email);
 
-                if(forComment) {
+                if (forComment) {
                     forComment = false;
                     String commentoInScrittura = titleBox.getText().toString();
                     if (commentoInScrittura.length() > 0) {
-                        new InsertComment(getApplicationContext(), emailPersona, commentoInScrittura, url, this).execute();
+                        if(checkNetwork()) new InsertComment(getApplicationContext(), emailPersona, commentoInScrittura, url, this).execute();
                     } else {
                         Toast.makeText(getApplicationContext(), "Commento non può essere vuoto!", Toast.LENGTH_LONG).show();
                     }
                 }
 
-                if(forLike){
-                    System.out.println("email: " + emailPersona);
-
-                    new CheckLike(url, emailPersona, getApplicationContext(), check).execute();
-                    System.out.println("fatto " + fatto);
+                if (forLike) {
+                    if(checkNetwork()) new CheckLike(url, emailPersona, getApplicationContext(), check).execute();
                     if (menu.getIcon().getConstantState().equals(getResources().getDrawable(R.drawable.liked).getConstantState())) {
                         menu.setIcon(getResources().getDrawable(R.drawable.unliked));
                         artwork.setLikes(artwork.getLikes() - 1);
@@ -519,7 +478,6 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                         menu.setIcon(getResources().getDrawable(R.drawable.liked));
                         artwork.setLikes(artwork.getLikes() + 1);
                     }
-                    System.out.println(artwork.getFilename() + " " + artwork.getLikes());
                     long likes = artwork.getLikes();
                     if (likes != 0) {
                         if (likes == 1)
@@ -529,20 +487,11 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                     } else piace.setText("");
                     // chiama la funzione di libreria per aggiungere il like
                     PutLike p = new PutLike(url, emailPersona, getApplicationContext(), l);
-                    //aspetto che checklike abbia impostato il testo del bottone like.
-
-                    /*
-                    while (!fatto) {
-                    }
-                    */
-
-                    System.out.println("fatto " + fatto);
-
                     //imposto i like dell'artwork e cambio il testo del bottone
                     //if (like.getText().equals("Non mi piace più")) {
 
                     //eseguo l'operazione lato server.
-                    p.execute();
+                    if(checkNetwork()) p.execute();
 
                     forLike = false;
 
@@ -579,95 +528,73 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         }
     }
 
-    public void disconnetti(){
-        /*
-        if (mGoogleApiClient.isConnected()) {
-            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
-            mGoogleApiClient.disconnect();
-            mGoogleApiClient.connect();
-        }
-        */
-
-        pref.edit().putBoolean("token",true).commit();
+    public void disconnetti() {
+        pref.edit().putBoolean("token", true).commit();
     }
 
 
     //callback per downloadartworks
-    public void done(){
+    public void done() {
         Intent myIntent = new Intent(ArtworkDetails.this, MainActivity.class);
         this.startActivity(myIntent);
         this.finish();
     }
+
     // callback from insertComment
-    public void done(String x){
+    public void done(String x) {
         //il parametro non serve (serve per differenziare i diversi done()
         commentoInScrittura.setHint("Scrivi un commento..");
         commentoInScrittura.setText("");
-        new DownloadComments(this,this,url).execute();
+        if(checkNetwork()) new DownloadComments(this, this, url).execute();
         disconnetti();
     }
 
     // callback from PutLike
-    public void done(boolean x){
+    public void done(boolean x) {
         DatabaseArtwork db = new DatabaseArtwork(getApplicationContext());
-        db.removeArtwork(url, db.getWritableDatabase());
-        db.insert(artwork, db.getWritableDatabase());
+       /* db.removeArtwork(url, db.getWritableDatabase());
+        db.insert(artwork, db.getWritableDatabase());*/
+        db.setArtworkFromUrl(url, artwork);
+        if(checkNetwork()) new DownloadLike(this,this, url).execute();
         disconnetti();
     }
 
     //callback from like
-    public void done(boolean l, boolean inutile){
+    public void done(boolean l, boolean inutile) {
         //precedentemente ho già messo il like.
-        messoLike=l;
-
-        System.out.println("sono in done from check like");
-
-        if(forLike){
+        messoLike = l;
+        if (forLike) {
             if (!messoLike) {
-                //like.setText("Mi piace");
-                //MenuItem item = m.getItem(0);
                 menu.setIcon(getResources().getDrawable(R.drawable.unliked));
             } else {
-                //like.setText("Non mi piace più");
-                //MenuItem item = m.getItem(0);
                 menu.setIcon(getResources().getDrawable(R.drawable.liked));
             }
-        }else {
+        } else {
             if (!messoLike) {
-                //like.setText("Mi piace");
                 MenuItem item = m.getItem(0);
                 item.setIcon(getResources().getDrawable(R.drawable.unliked));
             } else {
-                //like.setText("Non mi piace più");
                 MenuItem item = m.getItem(0);
                 item.setIcon(getResources().getDrawable(R.drawable.liked));
             }
         }
-        fatto=true;
+        fatto = true;
     }
 
     // callback from removeartwork
-    public void done(int x){
+    public void done(int x) {
         Toast.makeText(getApplicationContext(), "La tua foto è stata rimossa.", Toast.LENGTH_SHORT).show();
-        if(isOnline()){
-            //Log.d("DB","creo istanza di DB");
+        if(checkNetwork()) {
             DatabaseArtwork db = new DatabaseArtwork(getApplicationContext());
             db.clear(db.getWritableDatabase());
-            new DownloadArtworks(getApplicationContext(),db,this).execute();
-        }else{
-            Toast.makeText(getApplicationContext(), "Connessione internet assente!", Toast.LENGTH_LONG).show();
-            done();
+            new DownloadArtworks(getApplicationContext(), db, this).execute();
         }
     }
-    public boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
+
 
     //callback from DownloadArtist
-    public void done(final String nc, final String pic2, final String nick, final String bio, final String sito){
-        if(!tokenDaCommento) {
+    public void done(final String nc, final String pic2, final String nick, final String bio, final String sito) {
+        if (!tokenDaCommento) {
             artista = nc;
 
             //immagine artwork
@@ -697,8 +624,8 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                 }
             });
 
-            new DownloadComments(this, this, url).execute();
-        }else {
+            if(checkNetwork()) new DownloadComments(this, this, url).execute();
+        } else {
             tokenDaCommento = false;
             Intent intent = new Intent(ArtworkDetails.this, ArtistProfile.class);
             intent.putExtra("nomecognome", nc);
@@ -710,71 +637,71 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             startActivity(intent);
         }
     }
+    //callback from DownloadLikes
+    public void done(String [] autori, String[] pic, String[] email){
+        this.listaAutoriL=autori;
+        System.out.println(listaAutoriL[0]);
+        this.listaPicL=pic;
+        this.listaEmailL=email;
 
+    }
     //callback from DownloadComments
     @Override
-    public void done(String[] autori, String[] comm, String[] date, String[] pic, String[] mails) {
+    public void done(String[] autori, String[] comm, String[] date, String[] pic, String[] mails, String[] id) {
         this.listaAutori = autori;
         this.listaCommenti = comm;
         this.listaDate = date;
         this.listaPic = pic;
         this.listaEmail = mails;
+        this.listaId =id;
 
         long[] dateMillis = new long[listaDate.length];
-        //String givenDateString = "2015-03-17 19:03:53";
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS");
-        for(int i=0;i<listaDate.length;i++) {
+        for (int i = 0; i < listaDate.length; i++) {
             String givenDate = listaDate[i];
-            //System.out.println(givenDate);
             int ora = Character.getNumericValue(givenDate.charAt(12));
-            String givenDateString = givenDate.substring(0,12) + "" + (ora+1) + "" + givenDate.substring(13,19);
+            String givenDateString = givenDate.substring(0, 12) + "" + (ora + 1) + "" + givenDate.substring(13, 19);
             try {
                 Date mDate = sdf.parse(givenDateString);
                 long timeInMilliseconds = mDate.getTime();
                 dateMillis[i] = timeInMilliseconds;
-            //    System.out.println("Date in milli :: " + timeInMilliseconds);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
         }
 
         timeAgo = new String[dateMillis.length];
-        for(int i = 0; i< dateMillis.length;i++){
-            timeAgo[i] = getTimeAgo(dateMillis[i],getApplicationContext());
+        for (int i = 0; i < dateMillis.length; i++) {
+            timeAgo[i] = getTimeAgo(dateMillis[i], getApplicationContext());
         }
 
-
-        if(comm.length == 1){
+        if(comm.length == 0)
+            commenti.setText("Nessun commento");
+        else if(comm.length == 1){
             commenti.setText(comm.length + " commento");
         }else{
             commenti.setText(comm.length + " commenti");
         }
+
+        if(checkNetwork()) new DownloadLike(this,this,url).execute();
     }
 
 
-    // call this method when required to show popup
-    public void onShowPopup(View v){
-
-        LayoutInflater layoutInflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
+    public void onShowPopup(View v) {
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         // inflate the custom popup layout
-        final View inflatedView = layoutInflater.inflate(R.layout.popup_layout, null,false);
+        final View inflatedView = layoutInflater.inflate(R.layout.popup_layout, null, false);
         // find the ListView in the popup layout
-        ListView listView = (ListView)inflatedView.findViewById(R.id.commentsListView);
-
+        ListView listView = (ListView) inflatedView.findViewById(R.id.commentsListView);
         // get device size
         Display display = getWindowManager().getDefaultDisplay();
         final Point size = new Point();
         display.getSize(size);
-        int mDeviceHeight = size.y;
-
         // fill the data to the list items
         setSimpleList(listView);
-
-
         // set height depends on the device size
-        popWindow = new PopupWindow(inflatedView, size.x - 50,size.y - 400, true );
+        popWindow = new PopupWindow(inflatedView, size.x - 50, size.y - 400, true);
         // set a background drawable with rounders corners
         popWindow.setBackgroundDrawable(getResources().getDrawable(R.drawable.popup_bg));
         // make it focusable to show the keyboard to enter in `EditText`
@@ -783,9 +710,9 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         popWindow.setOutsideTouchable(true);
 
         // show the popup at bottom of the screen and set some margin at bottom ie,
-        popWindow.showAtLocation(v, Gravity.BOTTOM, 0,100);
+        popWindow.showAtLocation(v, Gravity.BOTTOM, 0, 100);
 
-        EditText comme = (EditText)inflatedView.findViewById(R.id.writeComment);
+        EditText comme = (EditText) inflatedView.findViewById(R.id.writeComment);
         comme.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -796,7 +723,56 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
 
     }
 
-    void setSimpleList(ListView listView){
+    public void onShowPopupLike(View v){
+        LayoutInflater layoutInflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        // inflate the custom popup layout
+        final View inflatedView = layoutInflater.inflate(R.layout.popup_like, null,false);
+        // find the ListView in the popup layout
+        ListView listView = (ListView)inflatedView.findViewById(R.id.likesListView);
+
+        // get device size
+        Display display = getWindowManager().getDefaultDisplay();
+        final Point size = new Point();
+        display.getSize(size);
+        int mDeviceHeight = size.y;
+
+        // fill the data to the list items
+        setSimpleListLike(listView);
+
+
+        // set height depends on the device size
+        popWindowL = new PopupWindow(inflatedView, size.x - 50,size.y - 400, true );
+        // set a background drawable with rounders corners
+        popWindowL.setBackgroundDrawable(getResources().getDrawable(R.drawable.popup_bg));
+        // make it focusable to show the keyboard to enter in `EditText`
+        popWindowL.setFocusable(true);
+        // make it outside touchable to dismiss the popup window
+        popWindowL.setOutsideTouchable(true);
+
+        // show the popup at bottom of the screen and set some margin at bottom ie,
+        popWindowL.showAtLocation(v, Gravity.BOTTOM, 0,100);
+
+    }
+    void setSimpleListLike(ListView listView){
+
+        CustomListLike adapter = new CustomListLike(ArtworkDetails.this, listaAutoriL, listaPicL);
+        listView.setAdapter(adapter);
+
+        final TaskCallbackDownloadArtist cal = this;
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                tokenDaCommento=true;
+
+                emailOfItemSelectedInComment=listaEmailL[position];
+                if (checkNetwork()) new DownloadArtist(getApplicationContext(),listaEmailL[position],cal).execute();
+            }
+        });
+    }
+
+
+    void setSimpleList(ListView listView) {
 
         CustomListCommenti adapter = new CustomListCommenti(ArtworkDetails.this, listaCommenti, listaPic, timeAgo, listaAutori);
         listView.setAdapter(adapter);
@@ -807,15 +783,60 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 System.out.println(listaAutori[position]);
-                if(!listaAutori[position].equalsIgnoreCase("Visitatore")){
+                if (!listaAutori[position].equalsIgnoreCase("Visitatore")) {
                     tokenDaCommento = true;
                     emailOfItemSelectedInComment = listaEmail[position];
-                    new DownloadArtist(getApplicationContext(),listaEmail[position],cal).execute();
+                    if(checkNetwork()) new DownloadArtist(getApplicationContext(), listaEmail[position], cal).execute();
                 }
             }
         });
+        //AGGIUNGI CODICE
+        if (!visitatore) {
+            listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    final String idCommentoSegnalato = listaId[position];
+                    final String utenteSegnalato = listaEmail[position];
+                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(ArtworkDetails.this);
+                    final LayoutInflater inflater = getLayoutInflater();
+                    final View convertView = (View) inflater.inflate(R.layout.custom, null);
+                    alertDialog.setView(convertView);
+                    alertDialog.setTitle("SEGNALA COMMENTO - Scegli la causa della segnalazione");
+                    alertDialog.setView(convertView);
+                    final String[] filtri = {"Spam o truffa", "Contenuti pornografici", "Contenuti che incitano all'odio\ne/o alla violenza", "Insulta/Attacca qualcuno in\nbase a religione, etnia o\norientamento sessuale", "Mancato rispetto delle\nproprietà intellettuali"};
+                    final int[] immagini = {R.drawable.spam, R.drawable.nude, R.drawable.violence, R.drawable.racism, R.drawable.truffa};
+                    CustomListInt adapter = new CustomListInt(ArtworkDetails.this, filtri, immagini);
+                    ListView lv = (ListView) convertView.findViewById(R.id.listView1);
 
-
+                    lv.setAdapter(adapter);
+                    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            String item = filtri[position];
+                            dialog.dismiss();
+                            titoloArtwork = artwork.getFilename();
+                            if (item.equalsIgnoreCase("Spam o truffa")) {
+                                avviaSegnalazioneCommento(1, titoloArtwork, utenteSegnalato, idCommentoSegnalato);
+                            } else if (item.equalsIgnoreCase("Contenuti pornografici")) {
+                                avviaSegnalazioneCommento(2, titoloArtwork, utenteSegnalato, idCommentoSegnalato);
+                            } else if (item.equalsIgnoreCase("Contenuti che incitano all'odio\n" +
+                                    "e/o alla violenza")) {
+                                avviaSegnalazioneCommento(3, titoloArtwork, utenteSegnalato, idCommentoSegnalato);
+                            } else if (item.equalsIgnoreCase("Insulta/Attacca qualcuno in\n" +
+                                    "base a religione, etnia o\n" +
+                                    "orientamento sessuale")) {
+                                avviaSegnalazioneCommento(4, titoloArtwork, utenteSegnalato, idCommentoSegnalato);
+                            } else if (item.equalsIgnoreCase("Mancato rispetto delle\n" +
+                                    "proprietà intellettuali")) {
+                                avviaSegnalazioneCommento(5, titoloArtwork, utenteSegnalato, idCommentoSegnalato);
+                            }
+                        }
+                    });
+                    dialog = alertDialog.show();
+                    return true;
+                }
+            });
+        }
     }
 
     public static String getTimeAgo(long time, Context ctx) {
@@ -853,17 +874,16 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         //getMenuInflater().inflate(R.menu.menu_artwork_details, menu);
-        if(email!=null && email.equals(artwork.getArtista())){
+        if (email != null && email.equals(artwork.getArtista())) {
             getMenuInflater().inflate(R.menu.menu_artwork_details, menu);
-            m=menu;
-        }else if(email!=null && !email.equals(artwork.getArtista())){
+            m = menu;
+        } else if (email != null && !email.equals(artwork.getArtista())) {
             getMenuInflater().inflate(R.menu.menu_artwork_details_artista, menu);
-            m=menu;
-        }
-        else {
+            m = menu;
+        } else {
             System.out.println(artwork.getArtista());
             getMenuInflater().inflate(R.menu.menu_artwork_details_visitatore, menu);
-            m=menu;
+            m = menu;
         }
         return true;
     }
@@ -878,7 +898,7 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        }else if (id == R.id.menu_item_rimuovi) {
+        } else if (id == R.id.menu_item_rimuovi) {
             d = this;
             AlertDialog mDialog = new AlertDialog.Builder(this)
                     .setTitle("Vuoi davvero rimuovere la tua opera?")
@@ -888,7 +908,7 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     DeleteArtwork a = new DeleteArtwork(url, getApplicationContext(), d);
-                                    a.execute();
+                                    if(checkNetwork()) a.execute();
                                 }
                             })
 
@@ -915,6 +935,50 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             startActivity(intent);
             this.finish();
             return true;
+
+        } else if (id == R.id.menu_item_segnala) {
+            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(ArtworkDetails.this);
+            final LayoutInflater inflater = getLayoutInflater();
+            final View convertView = (View) inflater.inflate(R.layout.custom, null);
+            alertDialog.setView(convertView);
+            alertDialog.setTitle("SEGNALA FOTO - Scegli la causa della segnalazione");
+            alertDialog.setView(convertView);
+
+            final String[] filtri = {"Spam o truffa", "Contenuti pornografici", "Contenuti che incitano all'odio\ne/o alla violenza", "Insulta/Attacca qualcuno in\nbase a religione, etnia o\norientamento sessuale", "Mancato rispetto delle\nproprietà intellettuali"};
+            final int[] immagini = {R.drawable.spam, R.drawable.nude, R.drawable.violence, R.drawable.racism, R.drawable.truffa};
+            CustomListInt adapter = new CustomListInt(ArtworkDetails.this, filtri, immagini);
+            ListView lv = (ListView) convertView.findViewById(R.id.listView1);
+
+            lv.setAdapter(adapter);
+
+
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String item = filtri[position];
+                    dialog.dismiss();
+                    titoloArtwork = artwork.getFilename();
+                    if (item.equalsIgnoreCase("Spam o truffa")) {
+                        avviaSegnalazione(1, titoloArtwork);
+                    } else if (item.equalsIgnoreCase("Contenuti pornografici")) {
+                        avviaSegnalazione(2, titoloArtwork);
+                    } else if (item.equalsIgnoreCase("Contenuti che incitano all'odio\n" +
+                            "e/o alla violenza")) {
+                        avviaSegnalazione(3, titoloArtwork);
+                    } else if (item.equalsIgnoreCase("Insulta/Attacca qualcuno in\n" +
+                            "base a religione, etnia o\n" +
+                            "orientamento sessuale")) {
+                        avviaSegnalazione(4, titoloArtwork);
+                    } else if (item.equalsIgnoreCase("Mancato rispetto delle\n" +
+                            "proprietà intellettuali")) {
+                        avviaSegnalazione(5, titoloArtwork);
+                    }
+                }
+
+
+            });
+            dialog = alertDialog.show();
+            return true;
         } else if (id == R.id.menu_item_share) {
             final AlertDialog.Builder alertDialog = new AlertDialog.Builder(ArtworkDetails.this);
             final LayoutInflater inflater = getLayoutInflater();
@@ -922,8 +986,8 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             alertDialog.setView(convertView);
             alertDialog.setTitle("Condividi con");
 
-            final String[] filtri = {"Facebook", "Facebook Messenger", "Whatsapp", "Twitter"};
-            final int[] immagini = {R.drawable.fb, R.drawable.me, R.drawable.wa, R.drawable.tw};
+            final String[] filtri = {"Facebook", "Facebook Messenger", "Pinterest", "Whatsapp", "Twitter", "Google+", "Instagram"};
+            final int[] immagini = {R.drawable.fb, R.drawable.me, R.drawable.pi, R.drawable.wa, R.drawable.tw, R.drawable.go, R.drawable.in};
 
             CustomListInt adapter = new CustomListInt(ArtworkDetails.this, filtri, immagini);
             ListView lv = (ListView) convertView.findViewById(R.id.listView1);
@@ -939,10 +1003,16 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                         eseguiShareFacebook();
                     } else if (item.equalsIgnoreCase("Facebook Messenger")) {
                         sendFacebookMessage(findViewById(android.R.id.content));
+                    } else if (item.equalsIgnoreCase("Pinterest")) {
+                        sharePinterest();
                     } else if (item.equalsIgnoreCase("Whatsapp")) {
                         eseguiShareWhatsapp();
                     } else if (item.equalsIgnoreCase("Twitter")) {
                         shareTwitter();
+                    } else if (item.equalsIgnoreCase("Google+")) {
+                        shareGoogle();
+                    } else if (item.equalsIgnoreCase("Instagram")) {
+                        shareInstagram();
                     }
                 }
             });
@@ -950,15 +1020,13 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             dialog = alertDialog.show();
             return true;
         } else if (id == R.id.like) {
-            System.out.println("ho cliccato like");
-
             if (visitatore) {
                 System.out.println("sono visitatore");
-                forLike=true;
+                forLike = true;
                 menu = item;
-                if(!mGoogleApiClient.isConnected()){
+                if (!mGoogleApiClient.isConnected()) {
                     signInWithGplus();
-                }else{
+                } else {
                     getProfileInformation();
                 }
             } else {
@@ -969,7 +1037,6 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                 while (!fatto) {
                 }
                 //imposto i like dell'artwork e cambio il testo del bottone
-                //if (like.getText().equals("Non mi piace più")) {
                 if (item.getIcon().getConstantState().equals(getResources().getDrawable(R.drawable.liked).getConstantState())) {
                     item.setIcon(getResources().getDrawable(R.drawable.unliked));
                     artwork.setLikes(artwork.getLikes() - 1);
@@ -978,18 +1045,18 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                     artwork.setLikes(artwork.getLikes() + 1);
                 }
 
-
-                System.out.println(artwork.getFilename() + " " + artwork.getLikes());
                 long likes = artwork.getLikes();
                 if (likes != 0) {
-                    if (likes == 1)
+                    if (likes == 1) {
+                        piace.setVisibility(View.VISIBLE);
                         piace.setText("Piace a " + likes + " persona");
+                    }
                     else
                         piace.setText("Piace a " + likes + " persone");
                 } else piace.setText("");
 
                 //eseguo l'operazione lato server.
-                p.execute();
+                if(checkNetwork()) p.execute();
                 return true;
             }
         }
@@ -998,29 +1065,29 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     }
 
 
-        @Override
-        protected void onResume() {
-            super.onResume();
-            uiHelper.onResume();
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        uiHelper.onResume();
+    }
 
-        @Override
-        protected void onSaveInstanceState(Bundle outState) {
-            super.onSaveInstanceState(outState);
-            uiHelper.onSaveInstanceState(outState);
-        }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        uiHelper.onSaveInstanceState(outState);
+    }
 
-        @Override
-        public void onPause() {
-            super.onPause();
-            uiHelper.onPause();
-        }
+    @Override
+    public void onPause() {
+        super.onPause();
+        uiHelper.onPause();
+    }
 
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-            uiHelper.onDestroy();
-        }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        uiHelper.onDestroy();
+    }
 
 
     Session.StatusCallback callback = new Session.StatusCallback() {
@@ -1035,14 +1102,20 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     };
 
     public void eseguiShareFacebook() {
+        printKeyHash();
+
         if (Session.getActiveSession() == null || !Session.getActiveSession().isOpened()) {
             Session.openActiveSession(ArtworkDetails.this, true, callback);
+            printKeyHash();
+
         } else {
             publishFeedDialog();
+            printKeyHash();
+
         }
     }
 
-
+    //ESEGUI SHARE WHATSAPP
     public void eseguiShareWhatsapp() {
         Uri bmpUri = getLocalBitmapUri(img);
 
@@ -1053,13 +1126,12 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
             shareIntent.setAction(Intent.ACTION_SEND);
             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
             shareIntent.putExtra(Intent.EXTRA_TEXT, url);
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Segui '" + artista.toUpperCase() + "' su Art Everywhere e scopri tutte le sue opere! Scarica ora l'app! " + "http://bit.ly/ArtEverywhereDownload");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Segui '" + artista.toUpperCase() + "' su Art Everywhere e scopri tutte le sue opere! Scarica ora l'app! " + "http://bit.ly/AEDownload");
 
             shareIntent.setType("image/*");
             // Launch sharing dialog for image
             startActivity(Intent.createChooser(shareIntent, "Share Image"));
-        }
-        else {
+        } else {
             Toast.makeText(getApplicationContext(), "Devi prima installare Whatsapp", Toast.LENGTH_LONG).show();
         }
     }
@@ -1101,12 +1173,12 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         }
     }
 
-    private void shareTwitter(){
+    private void shareTwitter() {
         try {
             Intent tweetIntent = new Intent(Intent.ACTION_SEND);
             Uri bmpUri = getLocalBitmapUri(img);
 
-            tweetIntent.putExtra(Intent.EXTRA_TEXT, "Scopri '" + artista.toUpperCase() + "' su Art Everywhere! Scarica ora l'app! http://bit.ly/ArtEverywhereDownload");
+            tweetIntent.putExtra(Intent.EXTRA_TEXT, "Segui '" + artista.toUpperCase() + "' su Art Everywhere! Scarica ora l'app! http://bit.ly/AEDownload");
             tweetIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
             tweetIntent.setType("image/jpeg");
             PackageManager pm = ArtworkDetails.this.getPackageManager();
@@ -1129,14 +1201,52 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
         }
     }
 
+    //METODO PER CONDIVISIONE SU PINTEREST
+    public void sharePinterest() {
+        String shareUrl = "https://play.google.com/store/apps/details?id=com.arteverywhere.francesco.art";
+        Uri uri = getLocalBitmapUri(img);
+        System.out.println(uri);
+        String mediaUrl = url;
+        String description = "Segui '" + artista.toString().toUpperCase() + "' su Art Everywhere e scopri tutte le sue opere! Scarica ora l'app! " + "http://bit.ly/AEDownload";
+        String url = String.format(
+                "https://www.pinterest.com/pin/create/button/?url=%s&media=%s&description=%s",
+                urlEncode(shareUrl), urlEncode(mediaUrl), description);
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        filterByPackageName(ArtworkDetails.this, intent, "com.pinterest");
+        ArtworkDetails.this.startActivity(intent);
+    }
 
+    //ESEGUI SHARE GOOGLE PLUS
+    public void shareGoogle() {
+        Uri pictureUri = getLocalBitmapUri(img);
+
+        Intent shareIntent = ShareCompat.IntentBuilder.from(this)
+                .setText("Segui '" + artista.toUpperCase() + "' su Art Everywhere e scopri tutte le sue opere! Scarica ora l'app! " + "http://bit.ly/AEDownload").setType("image/jpeg")
+                .setStream(pictureUri).getIntent()
+                .setPackage("com.google.android.apps.plus");
+        startActivity(shareIntent);
+    }
+
+    //SHARE INSTAGRAM
+
+    public void shareInstagram() {
+        Uri uri = getLocalBitmapUri(img);
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/*");
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Segui '" + artista.toUpperCase() + "' su Art Everywhere e scopri tutte le sue opere! Scarica ora l'app! " + "http://bit.ly/AEDownload " + "#ArtEverywhere");
+        shareIntent.setPackage("com.instagram.android");
+        startActivity(shareIntent);
+    }
 
 
     private void publishFeedDialog() {
         Bundle params = new Bundle();
         params.putString("name", "Segui '" + artista.toUpperCase() + "' su Art Everywhere e scopri tutte le sue opere! Scarica ora l'app!");
         params.putString("caption", "Art Everywhere");
-        params.putString("description","Art Everywhere is a new way to share and promote your artworks!");
+        params.putString("description", "Art Everywhere is a new way to share and promote your artworks!");
         params.putString("link", "http://bit.ly/ArtEverywhereDownload");
         params.putString("picture", url);
         Session session = Session.getActiveSession();
@@ -1155,7 +1265,7 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
                             final String postId = values.getString("post_id");
                             if (postId != null) {
                                 Toast.makeText(ArtworkDetails.this,
-                                        "Posted story, id: "+postId,
+                                        "Posted story, id: " + postId,
                                         Toast.LENGTH_SHORT).show();
                             } else {
                                 // User clicked the Cancel button
@@ -1182,24 +1292,25 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     }
 
 
-
     public Uri getLocalBitmapUri(ImageView imageView) {
         // Extract Bitmap from ImageView drawable
         Drawable drawable = imageView.getDrawable();
         Bitmap bmp = null;
-        if (drawable instanceof BitmapDrawable){
+        Bitmap bmp2 = null;
+        if (drawable instanceof BitmapDrawable) {
             bmp = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+            bmp2 = addWatermark(getResources(), bmp);
         } else {
             return null;
         }
         // Store image to default external storage directory
         Uri bmpUri = null;
         try {
-            File file =  new File(Environment.getExternalStoragePublicDirectory(
+            File file = new File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
             file.getParentFile().mkdirs();
             FileOutputStream out = new FileOutputStream(file);
-            bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
+            bmp2.compress(Bitmap.CompressFormat.PNG, 90, out);
             out.close();
             bmpUri = Uri.fromFile(file);
         } catch (IOException e) {
@@ -1209,9 +1320,153 @@ public class ArtworkDetails extends ActionBarActivity implements TaskCallbackLik
     }
 
 
+    public static void filterByPackageName(Context context, Intent intent, String prefix) {
+        List<ResolveInfo> matches = context.getPackageManager().queryIntentActivities(intent, 0);
+        for (ResolveInfo info : matches) {
+            if (info.activityInfo.packageName.toLowerCase().startsWith(prefix)) {
+                intent.setPackage(info.activityInfo.packageName);
+                return;
+            }
+        }
+    }
+
+    public static String urlEncode(String s) {
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            Log.wtf("", "UTF-8 should always be supported", e);
+            return "";
+        }
+    }
+
+    public void avviaSegnalazione(int i, String titoloArtwork) {
+        final Intent intent = new Intent(ArtworkDetails.this, Segnalazione.class);
+        intent.putExtra("motivo", i);
+        intent.putExtra("url", url);
+        intent.putExtra("artwork", titoloArtwork);
+        intent.putExtra("artista", artista);
+        intent.putExtra("segnalato", artwork.getArtista());
+        if (!visitatore) {
+            intent.putExtra("segnalante", email);
+        }
+        startActivity(intent);
+    }
+
+    public void avviaSegnalazioneCommento(int i, String titoloArtwork, String utenteSegnalato, String id) {
+        System.out.println(utenteSegnalato);
+        final Intent intent = new Intent(ArtworkDetails.this, SegnalazioneCommento.class);
+        intent.putExtra("motivo", i);
+        intent.putExtra("url", url);
+        intent.putExtra("artwork", titoloArtwork);
+        intent.putExtra("artista", artista);
+        intent.putExtra("segnalato", utenteSegnalato);
+        intent.putExtra("idCommento",id);
+        if (!visitatore) {
+            intent.putExtra("segnalante", email);
+        }
+        startActivity(intent);
+    }
+
+    public static Bitmap addWatermark(Resources res, Bitmap source) {
+        int w, h;
+        Canvas c;
+        Paint paint;
+        Bitmap bmp, watermark;
+
+        Matrix matrix;
+        float scale;
+        RectF r;
+
+        w = source.getWidth();
+        h = source.getHeight();
+
+        // Create the new bitmap
+        bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG | Paint.FILTER_BITMAP_FLAG);
+
+        // Copy the original bitmap into the new one
+        c = new Canvas(bmp);
+        c.drawBitmap(source, 0, 0, paint);
+
+        // Load the watermark
+        watermark = BitmapFactory.decodeResource(res, R.drawable.logoshare);
+        // Scale the watermark to be approximately 10% of the source image height
+        //scale = (float) (((float) h * 0.10) / (float) watermark.getHeight());
+        if (w >= h) {
+            // Create the matrix
+            matrix = new Matrix();
+            matrix.postScale((float) 0.125, (float) 0.125);
+            // Determine the post-scaled size of the watermark
+            r = new RectF(0, 0, watermark.getWidth(), watermark.getHeight());
+            matrix.mapRect(r);
+            // Move the watermark to the bottom right corner
+            matrix.postTranslate(w - r.width() -2, h - r.height()-2);
+
+            // Draw the watermark
+            c.drawBitmap(watermark, matrix, paint);
+            // Free up the bitmap memory
+            watermark.recycle();
+        } else {
+            // Create the matrix
+            matrix = new Matrix();
+            matrix.postScale((float) 0.125, (float) 0.125);
+            // Determine the post-scaled size of the watermark
+            r = new RectF(0, 0, watermark.getWidth(), watermark.getHeight());
+            matrix.mapRect(r);
+            // Move the watermark to the bottom right corner
+            System.out.println("" + h + " " + r.height());
+            matrix.postTranslate(w - r.width()-2 , h - r.height()-2);
+
+            // Draw the watermark
+            c.drawBitmap(watermark, matrix, paint);
+            // Free up the bitmap memory
+            watermark.recycle();
+        }
+
+
+        return bmp;
+    }
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
+            return false;
+        }
+    }
+
+    private void printKeyHash(){
+        // Add code to print out the key hash
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(),
+                    PackageManager.GET_SIGNATURES);
+            for (android.content.pm.Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.d("KeyHash:", e.toString());
+        } catch (NoSuchAlgorithmException e) {
+            Log.d("KeyHash:", e.toString());
+        }
+    }
 
 }
-
 class CircleTransform implements Transformation {
     @Override
     public Bitmap transform(Bitmap source) {

@@ -1,9 +1,14 @@
 package com.arteverywhere.francesco.art;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -36,7 +41,7 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
     String bio;
     String sito;
     String email;
-
+    DatabaseArtwork db;
     String[] photoArtista = new String[4];
     SharedPreferences pref;
     String artistLogged;
@@ -45,7 +50,7 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_profile);
-        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
 
         picArtista = (ImageView)findViewById(R.id.imageView);
         NomeCognome = (TextView)findViewById(R.id.textView3);
@@ -53,6 +58,7 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
         emailArtista = (TextView)findViewById(R.id.textView6);
         bioArtista = (TextView)findViewById(R.id.textView7);
 
+        //RECUPERO INFO DA ACTIVITY PRECEDENTE
         Bundle extras = getIntent().getExtras();
         nomecognome = extras.getString("nomecognome");
         bio = extras.getString("bio");
@@ -69,7 +75,6 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setTitle(nomecognome);
 
-
         Picasso.with(ArtistProfile.this).load(pic).transform(new CircleTransform()).into(picArtista);
         NomeCognome.setText(nomecognome);
         nickname.setText(nick);
@@ -81,14 +86,15 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
 
 
         LinearLayout lin = (LinearLayout) findViewById(R.id.linlay2);
-        if(bio != null){
-            bioArtista.setText(bio);
-        }else{
-            lin.setVisibility(View.GONE);
-        }
+            if(bio != null){
+              bioArtista.setText(bio);
+            }else{
+                lin.setVisibility(View.GONE);
+            }
 
+            db = new DatabaseArtwork(getApplicationContext());
 
-        new GetArtworksOfArtist(getApplicationContext(),email,this).execute();
+            if(checkNetwork()) new GetArtworksOfArtist(getApplicationContext(),email,db,this).execute();
 
     }
 
@@ -126,7 +132,7 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
             if(photoArtista != null){
                 return photoArtista.length;
             }
-           return 0;
+            return 0;
         }
 
         @Override
@@ -163,8 +169,8 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
 
             Picasso.with(ArtistProfile.this)
                     .load("" + photoArtista[position] + "")
-                    //.placeholder(R.raw.place_holder)
-                    //.error(R.raw.place_holder)
+                            //.placeholder(R.raw.place_holder)
+                            //.error(R.raw.place_holder)
                     .noFade().resize(size/2, size/2)
                     .centerCrop()
                     .into(imageView);
@@ -217,8 +223,36 @@ public class ArtistProfile extends ActionBarActivity implements TaskCallbackArtw
             startActivity(i);
 
             return true;
+        }else if(id == R.id.modifica){
+            Intent i = new Intent(ArtistProfile.this,ModifyArtistProfile.class);
+            i.putExtra("email",email);
+            this.startActivity(i);
+            this.finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent, 0);
+                        }
+                    }).show();
+            return false;
+        }
+    }
+
 }

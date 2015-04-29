@@ -36,13 +36,7 @@ public class InsertComment extends AsyncTask<Void, Void, MainInsertCommentMessag
                 protected MainInsertCommentMessage doInBackground(Void... unused) {
                     // Retrieve service handle.
                     ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
-
-                    Log.d("DB","doInBack");
-                    
                     try {
-                        Log.d("LOG", "Sono qui");
-
-                        //MainArtistInfoMessage greeting = new MainArtistInfoMessage();
                         MainInsertCommentMessage greeting = new MainInsertCommentMessage();
                         greeting.setEmail(email);
                         greeting.setComment(commento);
@@ -75,7 +69,6 @@ public class InsertComment extends AsyncTask<Void, Void, MainInsertCommentMessag
                     } else {
                         Toast.makeText(mContext, "Commento non inserito", Toast.LENGTH_LONG).show();
                         mCallback.done("z");
-                        //Toast.makeText(mContext, "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
                     }
                 }
 

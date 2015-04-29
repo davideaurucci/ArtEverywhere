@@ -62,9 +62,9 @@ public class SplashScreen extends Activity implements TaskCallbackDownloadArtwor
             this.startActivity(myIntent);
             this.finish();
         }else{*/
-            Intent myIntent = new Intent(SplashScreen.this, MainActivity.class);
-            this.startActivity(myIntent);
-            this.finish();
+        Intent myIntent = new Intent(SplashScreen.this, MainActivity.class);
+        this.startActivity(myIntent);
+        this.finish();
         //}
     }
 

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -23,6 +24,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -115,17 +117,12 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
 
         Bundle extras = getIntent().getExtras();
         artist = extras.getString("email");
-
-        System.out.println("UPLOAD artista: " + artist);
-
         /* VISUALIZZO ACTION BAR CON LOGO */
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
         getSupportActionBar().setLogo(R.drawable.logo_trasparente);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-
-
 
         /* Codice per condivisione foto direttamente dalla gallery */
         Intent intent = getIntent();
@@ -141,11 +138,7 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
             if(email != null) {
                 Uri i = handleSendImage(intent);
                 try {
-                    System.out.println("*" + i.toString());
-
                     String filename = compressImage(i.toString());
-                    System.out.println(filename);
-
                     Bitmap bitmap = BitmapFactory.decodeFile(filename);
                     ByteArrayOutputStream bao = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bao);
@@ -214,13 +207,11 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                 lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        //System.out.println(tecniche[position]);
                         tecnique.setText("Tecnica*: " + tecniche[position]);
                         tecnicaScelta = tecniche[position];
                         btn_tecniche.setText("CAMBIA TECNICA");
                         dialog.dismiss();
                         isTecnica = true;
-                        //System.out.println("*"+description.getText().toString()+"*");
                     }
                 });
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_item_black, tecniche);
@@ -286,7 +277,6 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "IMG_" + timeStamp + "_";
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        //File storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ArtEverywhere");
         File image = File.createTempFile(
                 imageFileName, /* prefix */
                 ".jpg", /* suffix */
@@ -303,11 +293,6 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
         System.out.println("Version installed: " + Build.VERSION.SDK_INT + "| Vers KikKat: " + Build.VERSION_CODES.KITKAT);
         System.out.println("ResCode " + resultCode + " - Res OK " + RESULT_OK);
         System.out.println("ReqCode " + requestCode + " - REQ TAKE PHOTO " + REQUEST_TAKE_PHOTO);
-        if(data != null){
-            System.out.println("NON NULLO");
-            System.out.println("**"+data.getData());
-            System.out.println("**"+data.getScheme());
-        }
 
         if (resultCode == RESULT_OK){
             if(requestCode == REQUEST_TAKE_PHOTO){
@@ -326,9 +311,7 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                 if (isCamera) {
                     try {
                         selectedImageUri = outputFileUri;
-
                         String filename = compressImage(selectedImageUri.toString());
-                        System.out.println(filename);
 
                         Bitmap bitmap = BitmapFactory.decodeFile(filename);
                         ByteArrayOutputStream bao = new ByteArrayOutputStream();
@@ -340,41 +323,17 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                         Bitmap thumb = Bitmap.createScaledBitmap(bitmap,300,250,false);
                         btn_choose.setImageBitmap(thumb);
 
-                        /* Cancello la foto in "alta qualità" che ho scattato e si è salvata in Galleria
-                         * in modo da avere nell'sd solo quella con dimensioni ridotte
-                         */
                         File f = new File(photoPath);
                         f.delete();
-                        System.out.println(photoPath);
-
-
-                        /*
-                        VECCHIO CODICE
-                        String path = getPath(this, selectedImageUri);
-                        FileInputStream in = new FileInputStream(path);
-                        final byte[] array = ByteStreams.toByteArray(in);
-                        Bitmap bmp = BitmapFactory.decodeByteArray(array, 0, array.length);
-
-                        ByteArrayOutputStream bao = new ByteArrayOutputStream();
-                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, bao);
-                        ba = bao.toByteArray();
-
-                        isFoto = true;
-                        Bitmap thumb = Bitmap.createScaledBitmap(bmp,300,250,false);
-                        btn_choose.setImageBitmap(thumb);
-                        */
-
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         e.printStackTrace();
                     }
                 } else {
                     selectedImageUri = data == null ? null : data.getData();
                     try {
-                        System.out.println("*" + selectedImageUri.toString());
 
                         String filename = compressImage(selectedImageUri.toString());
-                        System.out.println(filename);
-
                         Bitmap bitmap = BitmapFactory.decodeFile(filename);
                         ByteArrayOutputStream bao = new ByteArrayOutputStream();
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bao);
@@ -391,21 +350,7 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                          */
                         File f = new File(photoPath);
                         f.delete();
-                        System.out.println(photoPath);
 
-
-                        /* VECCHIO CODICE
-                        final InputStream imageStream = getContentResolver().openInputStream(selectedImageUri);
-                        final Bitmap bmp = BitmapFactory.decodeStream(imageStream);
-
-                        ByteArrayOutputStream bao = new ByteArrayOutputStream();
-                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, bao);
-                        ba = bao.toByteArray();
-
-                        isFoto = true;
-                        Bitmap thumb = Bitmap.createScaledBitmap(bmp,300,250,false);
-                        btn_choose.setImageBitmap(thumb);
-                        */
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -422,8 +367,6 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
 
         BitmapFactory.Options options = new BitmapFactory.Options();
 
-       //By setting this field as true, the actual bitmap pixels are not loaded in the memory. Just the bounds are loaded. If
-       //you try the use the bitmap here, you will get null.
         options.inJustDecodeBounds = true;
         Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
 
@@ -597,7 +540,6 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                     return greeting;
                 } catch (IOException e) {
                     Toast.makeText(getApplicationContext(), "Exception during API call - tecniche!", Toast.LENGTH_LONG).show();
-                    //Log.d("ERRORE",e.getMessage());
                 }
                 return null;
             }
@@ -605,13 +547,9 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
             @Override
             protected void onPostExecute(MainTechniqueResponseCollection greeting) {
                 if (greeting != null) {
-                    System.out.println("SONO QUI");
-                    System.out.println("tecniche: " + greeting.size());
-                    System.out.println("tecniche: " + greeting.getTechniques().size());
                     tecniche = new String[greeting.getTechniques().size()];
                     for(int i = 0; i < greeting.getTechniques().size(); i++){
                         tecniche[i] = greeting.getTechniques().get(i).getTechnique();
-                        //Log.d("TECNICA",greeting.getTechniques().get(i).getTechnique());
                     }
                     //Toast.makeText(getApplicationContext(), "Upload successfull!", Toast.LENGTH_LONG).show();
                 } else {
@@ -619,14 +557,8 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                 }
             }
         };
-        getTec.execute();
+        if(checkNetwork()) getTec.execute();
 
-    }
-
-    public boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     @Override
@@ -645,7 +577,7 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
 
         // POST ARTWORK
         if (id == R.id.upload_artwork){
-            if(isOnline()){
+            if(checkNetwork()){
                 if(!isFoto){
                     Toast.makeText(getApplicationContext(), "Devi scegliere una foto!", Toast.LENGTH_LONG).show();
                 }else if(!ValidoCampo(filename.getText().toString())){
@@ -661,19 +593,9 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                             ArtEverywhere apiServiceHandle = AppConstants.getApiServiceHandle(null);
 
                             try {
-                                System.out.println("Sono qui 1");
                                 MainUploadRequestMessage greeting = new MainUploadRequestMessage();
-                                System.out.println("Sono qui 2");
                                 greeting.setTitle(filename.getText().toString());
-                                //greeting.setFilename(filename.getText().toString());
-
-                                //System.out.println("*"+ba);
-                                //String decoded = new String(ba, "UTF-8");
-                                //String photo = new String(ba);
-                                //System.out.println("**"+photo);
                                 greeting.setImage(imageToUpload);
-                                //greeting.encodePhoto(ba);
-                                //greeting.setPhoto(image);
                                 greeting.setArtist(artist);
                                 greeting.setTechnique(tecnicaScelta);
 
@@ -681,33 +603,13 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                                 if(!size.getText().toString().equals("")) greeting.setDim(size.getText().toString());
                                 if(!place.getText().toString().equals("")) greeting.setLuogo(place.getText().toString());
 
-                                System.out.println("Sono qui 3");
-
                                 ArtEverywhere.Upload.Putphoto up = apiServiceHandle.upload().putphoto(greeting);
-                                System.out.println("Sono qui 4");
                                 up.execute();
-                                System.out.println("Sono qui 5");
-                                /*
-                                MainDefaultResponseMessage m = up.execute();
-                                System.out.println("Sono qui 5");
 
-                                if(m.getMessage().equals("Artist not found!")){
-                                    Toast.makeText(getApplicationContext(), "Upload fallito! Devi essere utente registrato!", Toast.LENGTH_LONG).show();
-                                    return null;
-                                }else if(m.getMessage().equals("Technique not found!")){
-                                    Toast.makeText(getApplicationContext(), "Upload fallito! Tecnica non trovata", Toast.LENGTH_LONG).show();
-                                    return null;
-                                }
-                                */
-
-                                //System.out.println(m.getMessage().toString());
 
                                 return greeting;
                             } catch (IOException e) {
-                                System.out.println(e.getMessage());
-                                System.out.println(e.getStackTrace());
                                 Toast.makeText(getApplicationContext(), "Exception during API call - tecniche!", Toast.LENGTH_LONG).show();
-                                //Log.d("ERRORE",e.getMessage());
                             }
                             return null;
                         }
@@ -732,9 +634,8 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                                 //mNotifyManager.notify(id, mBuilder.build());
                                 mNotifyManager.notify(1, mBuilder.build());
 
-                                Toast.makeText(getApplicationContext(), "Upload successfull!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Caricamento completato!", Toast.LENGTH_LONG).show();
                             } else {
-                                //Toast.makeText(getApplicationContext(), "No greetings were returned by the API.", Toast.LENGTH_LONG).show();
                             }
                         }
                     };
@@ -753,16 +654,18 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                                 .setSmallIcon(R.drawable.ic_notifica_lollipop);
                     }
 
+                    SharedPreferences prefs = getApplicationContext().getSharedPreferences("MyPref",Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor  = prefs.edit();
+                    editor.putBoolean("upload", true);
+                    editor.commit();
 
-                    System.out.println("avvio upload");
+                    Toast.makeText(getApplicationContext(), "Caricamento artwork in corso...", Toast.LENGTH_LONG).show();
                     upPhoto.execute();
 
                     Intent i = new Intent(UploadActivity.this, MainActivity.class);
                     startActivity(i);
                     this.finish();
                 }
-            }else{
-                Toast.makeText(getApplicationContext(), "Connessione internet assente!", Toast.LENGTH_LONG).show();
             }
            return true;
         }
@@ -775,13 +678,11 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
         // DocumentProvider
         if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            Log.d("PATH","eccomi");
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
-                Log.d("PATH","eccomi 2");
                 if ("primary".equalsIgnoreCase(type)) {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
                 }
@@ -793,7 +694,6 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                 final String id = DocumentsContract.getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(
                         Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-                Log.d("PATH","eccomi 3");
                 return getDataColumn(context, contentUri, null, null);
 
             }
@@ -805,13 +705,11 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
                 Uri contentUri = null;
                 if ("image".equals(type)) {
                     contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                    Log.d("PATH","eccomi 4");
                 }
                 final String selection = "_id=?";
                 final String[] selectionArgs = new String[] {
                         split[1]
                 };
-                Log.d("PATH","eccomi 4+");
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
         }
@@ -819,15 +717,12 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
         else if ("content".equalsIgnoreCase(uri.getScheme())) {
             // Return the remote address
             if (isGooglePhotosUri(uri)) {
-                Log.d("PATH", "eccomi 5");
                 return uri.getLastPathSegment();
             }
-            Log.d("PATH","eccomi 6");
             return getDataColumn(context, uri, null, null);
         }
         // File
         else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            Log.d("PATH","eccomi 7");
             return uri.getPath();
         }
         return null;
@@ -888,5 +783,27 @@ public class UploadActivity extends ActionBarActivity implements AdapterView.OnI
      */
     public static boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+    }
+
+
+    public boolean checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        boolean isOnline = (netInfo != null && netInfo.isConnectedOrConnecting());
+        if(isOnline) {
+            return true;
+        }else{
+            new AlertDialog.Builder(this)
+                    .setTitle("Ops..qualcosa è andato storto!")
+                    .setMessage("Sembra che tu non sia collegato ad internet! ")
+                    .setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                            Intent callGPSSettingIntent = new Intent(Settings.ACTION_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
+            return false;
+        }
     }
 }
