@@ -34,3 +34,12 @@ indexes:
   ancestor: yes
 - kind: CommentEntry
   ancestor: yes
+- kind: TechniqueEntry
+  properties:
+  - name: nome
+  - name: eng
+- kind: LikeEntry
+  properties:
+  - name: email
+  - name: date_time
+    direction: desc
