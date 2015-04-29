@@ -26,3 +26,7 @@ Milestone 3 - Final
 - [Art Everywhere Landing Page](http://bit.ly/AEsitoweb)
 - [Feedback Survey](https://drive.google.com/file/d/0B1qdoPYeXd80S2RHU1hrckF0MDA/view?usp=sharing)
 
+Final Submission
+==============
+- [Documentation - User Manual]()
+- [Download APP from PlayStore](http://bit.ly/ArtEverywhereDownload)
