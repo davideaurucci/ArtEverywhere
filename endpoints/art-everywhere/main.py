@@ -1427,7 +1427,7 @@ class PicasaWA(remote.Service):
     def login(cls):
         gd_client = gdata.photos.service.PhotosService()
         gd_client.email = 'arteverywhere00@gmail.com'
-        gd_client.password = 'googleworkshop'
+        gd_client.password = 'PASSWORD'
         gd_client.source = 'art-everywhere'
         gd_client.ProgrammaticLogin()
         return gd_client
